@@ -45,8 +45,8 @@ export function ClientDialog({ open, onOpenChange, client, onSave }: ClientDialo
     } else {
       setFormData({
         name: "",
-        cedula: "",
         ruc: "",
+        cedula: "",
         address: "",
         email: "",
         phone: "",
@@ -56,7 +56,6 @@ export function ClientDialog({ open, onOpenChange, client, onSave }: ClientDialo
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    // Si ruc está vacío, envía "N/A"
     onSave({ ...formData, ruc: formData.ruc.trim() === "" ? "N/A" : formData.ruc })
   }
 
@@ -78,7 +77,7 @@ export function ClientDialog({ open, onOpenChange, client, onSave }: ClientDialo
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Nombre *</Label>
+              <Label htmlFor="name">Nombre</Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -88,7 +87,7 @@ export function ClientDialog({ open, onOpenChange, client, onSave }: ClientDialo
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="cedula">Cédula *</Label>
+              <Label htmlFor="cedula">Cédula</Label>
               <Input
                 id="cedula"
                 value={formData.cedula}
@@ -107,7 +106,7 @@ export function ClientDialog({ open, onOpenChange, client, onSave }: ClientDialo
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="email">Correo Electrónico *</Label>
+              <Label htmlFor="email">Correo Electrónico</Label>
               <Input
                 id="email"
                 type="email"
