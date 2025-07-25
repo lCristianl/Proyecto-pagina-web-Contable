@@ -3,37 +3,59 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, Users } from "lucide-react"
-import { ClientsTable } from "@/components/clients-table"
-import { ClientDialog } from "@/components/client-dialog"
-import { apiService, type Client } from "@/services/api"
+import { Plus, Search, Receipt } from "lucide-react"
+import { ExpensesTable } from "@/components/expenses-table"
+import { ExpenseDialog } from "@/components/expense-dialog"
+import { ExpenseStats } from "@/components/expense-stats"
+import { apiService, type Expense } from "@/services/api"
 import { useToast } from "@/hooks/use-toast"
 import { ClipLoader } from "react-spinners" // Añadir esta importación
 
-export function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>([])
+export function ExpensesPage() {
+  const [expenses, setExpenses] = useState<Expense[]>([])
   const [initialLoading, setInitialLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingClient, setEditingClient] = useState<Client | null>(null)
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
   const { toast } = useToast()
 
-  const fetchClients = async () => {
+  const fetchExpenses = async () => {
     try {
       setLoading(true)
-      const response = await apiService.getClients(page, search)
-      setClients(response.data.results)
+      const response = await apiService.getExpenses(page, search)
+      setExpenses(response.data.results)
       setTotalPages(Math.ceil(response.data.count / 10))
     } catch (error) {
-      console.error("Error fetching clients:", error)
+      console.error("Error fetching expenses:", error)
       toast({
         title: "Error",
-        description: "No se pudieron cargar los clientes",
+        description: "No se pudieron cargar los gastos",
         variant: "destructive",
       })
+      // Datos de ejemplo
+      setExpenses([
+        {
+          id: 1,
+          category: "Alquiler",
+          amount: 2000.0,
+          date: "2024-01-01",
+          description: "Alquiler mensual de oficina",
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
+        },
+        {
+          id: 2,
+          category: "Servicios",
+          amount: 150.0,
+          date: "2024-01-02",
+          description: "Factura de electricidad",
+          created_at: "2024-01-02T00:00:00Z",
+          updated_at: "2024-01-02T00:00:00Z",
+        },
+      ])
     } finally {
       setLoading(false)
       setInitialLoading(false) // Solo se ejecuta una vez
@@ -41,7 +63,7 @@ export function ClientsPage() {
   }
 
   useEffect(() => {
-    fetchClients()
+    fetchExpenses()
   }, [page, search])
 
   const handleSearch = (value: string) => {
@@ -49,54 +71,54 @@ export function ClientsPage() {
     setPage(1)
   }
 
-  const handleCreateClient = () => {
-    setEditingClient(null)
+  const handleCreateExpense = () => {
+    setEditingExpense(null)
     setIsDialogOpen(true)
   }
 
-  const handleEditClient = (client: Client) => {
-    setEditingClient(client)
+  const handleEditExpense = (expense: Expense) => {
+    setEditingExpense(expense)
     setIsDialogOpen(true)
   }
 
-  const handleDeleteClient = async (id: number) => {
+  const handleDeleteExpense = async (id: number) => {
     try {
-      await apiService.deleteClient(id)
+      await apiService.deleteExpense(id)
       toast({
         title: "Éxito",
-        description: "Cliente eliminado correctamente",
+        description: "Gasto eliminado correctamente",
       })
-      fetchClients()
+      fetchExpenses()
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo eliminar el cliente",
+        description: "No se pudo eliminar el gasto",
         variant: "destructive",
       })
     }
   }
 
-  const handleSaveClient = async (data: Partial<Client>) => {
+  const handleSaveExpense = async (data: Partial<Expense>) => {
     try {
-      if (editingClient) {
-        await apiService.updateClient(editingClient.id, data)
+      if (editingExpense) {
+        await apiService.updateExpense(editingExpense.id, data)
         toast({
           title: "Éxito",
-          description: "Cliente actualizado correctamente",
+          description: "Gasto actualizado correctamente",
         })
       } else {
-        await apiService.createClient(data)
+        await apiService.createExpense(data)
         toast({
           title: "Éxito",
-          description: "Cliente creado correctamente",
+          description: "Gasto creado correctamente",
         })
       }
       setIsDialogOpen(false)
-      fetchClients()
+      fetchExpenses()
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo guardar el cliente",
+        description: "No se pudo guardar el gasto",
         variant: "destructive",
       })
     }
@@ -110,8 +132,8 @@ export function ClientsPage() {
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <div className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            <h1 className="text-lg font-semibold">Clientes</h1>
+            <Receipt className="h-5 w-5" />
+            <h1 className="text-lg font-semibold">Gastos</h1>
           </div>
         </header>
         <div className="flex flex-col items-center justify-center h-screen">
@@ -128,44 +150,46 @@ export function ClientsPage() {
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
         <div className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          <h1 className="text-lg font-semibold">Clientes</h1>
+          <Receipt className="h-5 w-5" />
+          <h1 className="text-lg font-semibold">Gastos</h1>
         </div>
       </header>
       <div className="flex flex-1 flex-col gap-4 p-4">
+        <ExpenseStats expenses={expenses} />
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar clientes..."
+                placeholder="Buscar gastos..."
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-8 w-[300px]"
               />
             </div>
           </div>
-          <Button onClick={handleCreateClient} className="bg-blue-500 text-white hover:bg-blue-700 cursor-pointer">
+          <Button onClick={handleCreateExpense} className="bg-blue-500 text-white hover:bg-blue-700 cursor-pointer">
             <Plus className="mr-2 h-4 w-4" />
-            Nuevo Cliente
+            Nuevo Gasto
           </Button>
         </div>
 
-        <ClientsTable
-          clients={clients}
+        <ExpensesTable
+          expenses={expenses}
           loading={loading}
-          onEdit={handleEditClient}
-          onDelete={handleDeleteClient}
+          onEdit={handleEditExpense}
+          onDelete={handleDeleteExpense}
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}
         />
 
-        <ClientDialog
+        <ExpenseDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          client={editingClient}
-          onSave={handleSaveClient}
+          expense={editingExpense}
+          onSave={handleSaveExpense}
         />
       </div>
     </SidebarInset>

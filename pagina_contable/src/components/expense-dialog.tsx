@@ -87,7 +87,7 @@ export function ExpenseDialog({ open, onOpenChange, expense, onSave }: ExpenseDi
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="category">Categoría *</Label>
-              <Select value={formData.category} onValueChange={(value) => handleChange("category", value)}>
+              <Select value={formData.category} onValueChange={(value: string) => handleChange("category", value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona una categoría" />
                 </SelectTrigger>
@@ -136,10 +136,12 @@ export function ExpenseDialog({ open, onOpenChange, expense, onSave }: ExpenseDi
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" className="bg-red-500 text-white hover:bg-red-700 cursor-pointer" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">{expense ? "Actualizar" : "Crear"}</Button>
+            <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-700 cursor-pointer">
+              {expense ? "Actualizar" : "Crear"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

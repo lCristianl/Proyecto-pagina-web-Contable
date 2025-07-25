@@ -132,10 +132,12 @@ export function ProductDialog({ open, onOpenChange, product, onSave }: ProductDi
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" className="bg-red-500 text-white hover:bg-red-700 cursor-pointer" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">{product ? "Actualizar" : "Crear"}</Button>
+            <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-700 cursor-pointer">
+              {product ? "Actualizar" : "Crear"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

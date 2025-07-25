@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2 } from "lucide-react"
 import type { Expense } from "@/services/api"
-import { Pagination } from "@/components/ui/pagination"
+import { Pagination } from "@/components/pagination"
 
 interface ExpensesTableProps {
   expenses: Expense[]

@@ -151,7 +151,7 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
                 <Label htmlFor="client">Cliente *</Label>
                 <Select
                   value={formData.client_id}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, client_id: value }))}
+                  onValueChange={(value: string) => setFormData((prev) => ({ ...prev, client_id: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un cliente" />
@@ -169,7 +169,7 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
                 <Label htmlFor="status">Estado</Label>
                 <Select
                   value={formData.status}
-                  onValueChange={(value) =>
+                  onValueChange={(value: string) =>
                     setFormData((prev) => ({ ...prev, status: value as typeof formData.status }))
                   }
                 >
@@ -225,7 +225,7 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
                         <Label>Producto/Servicio</Label>
                         <Select
                           value={item.product?.id?.toString() || ""}
-                          onValueChange={(value) => updateItem(index, "product", value)}
+                          onValueChange={(value: string) => updateItem(index, "product", value)}
                         >
                           <SelectTrigger>
                             <SelectValue placeholder="Selecciona..." />
@@ -295,10 +295,12 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
             </Card>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" className="bg-red-500 text-white hover:bg-red-700 cursor-pointer" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">{invoice ? "Actualizar" : "Crear"}</Button>
+            <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-700 cursor-pointer">
+              {invoice ? "Actualizar" : "Crear"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

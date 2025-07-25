@@ -3,37 +3,64 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, Users } from "lucide-react"
-import { ClientsTable } from "@/components/clients-table"
-import { ClientDialog } from "@/components/client-dialog"
-import { apiService, type Client } from "@/services/api"
+import { Plus, Search, FileText } from "lucide-react"
+import { InvoicesTable } from "@/components/invoices-table"
+import { InvoiceDialog } from "@/components/invoice-dialog"
+import { apiService, type Invoice } from "@/services/api"
 import { useToast } from "@/hooks/use-toast"
 import { ClipLoader } from "react-spinners" // Añadir esta importación
 
-export function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>([])
+export function InvoicesPage() {
+  const [invoices, setInvoices] = useState<Invoice[]>([])
   const [initialLoading, setInitialLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingClient, setEditingClient] = useState<Client | null>(null)
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
   const { toast } = useToast()
 
-  const fetchClients = async () => {
+  const fetchInvoices = async () => {
     try {
       setLoading(true)
-      const response = await apiService.getClients(page, search)
-      setClients(response.data.results)
+      const response = await apiService.getInvoices(page, search)
+      setInvoices(response.data.results)
       setTotalPages(Math.ceil(response.data.count / 10))
     } catch (error) {
-      console.error("Error fetching clients:", error)
+      console.error("Error fetching invoices:", error)
       toast({
         title: "Error",
-        description: "No se pudieron cargar los clientes",
+        description: "No se pudieron cargar las facturas",
         variant: "destructive",
       })
+      // Datos de ejemplo
+      setInvoices([
+        {
+          id: 1,
+          client: {
+            id: 1,
+            name: "Empresa ABC S.A.",
+            cedula: "1234567890",
+            ruc: "1234567890",
+            address: "Av. Principal 123",
+            email: "contacto@empresaabc.com",
+            phone: "+593 99 123 4567",
+            created_at: "2024-01-01T00:00:00Z",
+            updated_at: "2024-01-01T00:00:00Z",
+          },
+          invoice_number: "INV-001",
+          date: "2024-01-15",
+          due_date: "2024-02-15",
+          status: "draft",
+          subtotal: 1000.0,
+          tax: 120.0,
+          total: 1120.0,
+          items: [],
+          created_at: "2024-01-15T00:00:00Z",
+          updated_at: "2024-01-15T00:00:00Z",
+        },
+      ])
     } finally {
       setLoading(false)
       setInitialLoading(false) // Solo se ejecuta una vez
@@ -41,7 +68,7 @@ export function ClientsPage() {
   }
 
   useEffect(() => {
-    fetchClients()
+    fetchInvoices()
   }, [page, search])
 
   const handleSearch = (value: string) => {
@@ -49,54 +76,54 @@ export function ClientsPage() {
     setPage(1)
   }
 
-  const handleCreateClient = () => {
-    setEditingClient(null)
+  const handleCreateInvoice = () => {
+    setEditingInvoice(null)
     setIsDialogOpen(true)
   }
 
-  const handleEditClient = (client: Client) => {
-    setEditingClient(client)
+  const handleEditInvoice = (invoice: Invoice) => {
+    setEditingInvoice(invoice)
     setIsDialogOpen(true)
   }
 
-  const handleDeleteClient = async (id: number) => {
+  const handleDeleteInvoice = async (id: number) => {
     try {
-      await apiService.deleteClient(id)
+      await apiService.deleteInvoice(id)
       toast({
         title: "Éxito",
-        description: "Cliente eliminado correctamente",
+        description: "Factura eliminada correctamente",
       })
-      fetchClients()
+      fetchInvoices()
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo eliminar el cliente",
+        description: "No se pudo eliminar la factura",
         variant: "destructive",
       })
     }
   }
 
-  const handleSaveClient = async (data: Partial<Client>) => {
+  const handleSaveInvoice = async (data: Partial<Invoice>) => {
     try {
-      if (editingClient) {
-        await apiService.updateClient(editingClient.id, data)
+      if (editingInvoice) {
+        await apiService.updateInvoice(editingInvoice.id, data)
         toast({
           title: "Éxito",
-          description: "Cliente actualizado correctamente",
+          description: "Factura actualizada correctamente",
         })
       } else {
-        await apiService.createClient(data)
+        await apiService.createInvoice(data)
         toast({
           title: "Éxito",
-          description: "Cliente creado correctamente",
+          description: "Factura creada correctamente",
         })
       }
       setIsDialogOpen(false)
-      fetchClients()
+      fetchInvoices()
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo guardar el cliente",
+        description: "No se pudo guardar la factura",
         variant: "destructive",
       })
     }
@@ -110,8 +137,8 @@ export function ClientsPage() {
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <div className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            <h1 className="text-lg font-semibold">Clientes</h1>
+            <FileText className="h-5 w-5" />
+            <h1 className="text-lg font-semibold">Facturación</h1>
           </div>
         </header>
         <div className="flex flex-col items-center justify-center h-screen">
@@ -128,8 +155,8 @@ export function ClientsPage() {
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
         <div className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          <h1 className="text-lg font-semibold">Clientes</h1>
+          <FileText className="h-5 w-5" />
+          <h1 className="text-lg font-semibold">Facturación</h1>
         </div>
       </header>
       <div className="flex flex-1 flex-col gap-4 p-4">
@@ -138,34 +165,34 @@ export function ClientsPage() {
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar clientes..."
+                placeholder="Buscar facturas..."
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-8 w-[300px]"
               />
             </div>
           </div>
-          <Button onClick={handleCreateClient} className="bg-blue-500 text-white hover:bg-blue-700 cursor-pointer">
+          <Button onClick={handleCreateInvoice} className="bg-blue-500 text-white hover:bg-blue-700 cursor-pointer">
             <Plus className="mr-2 h-4 w-4" />
-            Nuevo Cliente
+            Nueva Factura
           </Button>
         </div>
 
-        <ClientsTable
-          clients={clients}
+        <InvoicesTable
+          invoices={invoices}
           loading={loading}
-          onEdit={handleEditClient}
-          onDelete={handleDeleteClient}
+          onEdit={handleEditInvoice}
+          onDelete={handleDeleteInvoice}
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}
         />
 
-        <ClientDialog
+        <InvoiceDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          client={editingClient}
-          onSave={handleSaveClient}
+          invoice={editingInvoice}
+          onSave={handleSaveInvoice}
         />
       </div>
     </SidebarInset>

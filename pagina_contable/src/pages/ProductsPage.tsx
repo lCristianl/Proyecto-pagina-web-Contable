@@ -3,37 +3,60 @@ import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Search, Users } from "lucide-react"
-import { ClientsTable } from "@/components/clients-table"
-import { ClientDialog } from "@/components/client-dialog"
-import { apiService, type Client } from "@/services/api"
+import { Plus, Search, Package } from "lucide-react"
+import { ProductsTable } from "@/components/products-table"
+import { ProductDialog } from "@/components/product-dialog"
+import { apiService, type Product } from "@/services/api"
 import { useToast } from "@/hooks/use-toast"
 import { ClipLoader } from "react-spinners" // Añadir esta importación
 
-export function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>([])
+export function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([])
   const [initialLoading, setInitialLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingClient, setEditingClient] = useState<Client | null>(null)
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const { toast } = useToast()
 
-  const fetchClients = async () => {
+  const fetchProducts = async () => {
     try {
       setLoading(true)
-      const response = await apiService.getClients(page, search)
-      setClients(response.data.results)
+      const response = await apiService.getProducts(page, search)
+      setProducts(response.data.results)
       setTotalPages(Math.ceil(response.data.count / 10))
     } catch (error) {
-      console.error("Error fetching clients:", error)
+      console.error("Error fetching products:", error)
       toast({
         title: "Error",
-        description: "No se pudieron cargar los clientes",
+        description: "No se pudieron cargar los productos",
         variant: "destructive",
       })
+      // Datos de ejemplo
+      setProducts([
+        {
+          id: 1,
+          name: "Laptop Dell Inspiron",
+          price: 899.99,
+          type: "product",
+          code: "DELL-001",
+          description: "Laptop para oficina con 8GB RAM",
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
+        },
+        {
+          id: 2,
+          name: "Consultoría IT",
+          price: 150.0,
+          type: "service",
+          code: "SERV-001",
+          description: "Consultoría técnica por hora",
+          created_at: "2024-01-02T00:00:00Z",
+          updated_at: "2024-01-02T00:00:00Z",
+        },
+      ])
     } finally {
       setLoading(false)
       setInitialLoading(false) // Solo se ejecuta una vez
@@ -41,7 +64,7 @@ export function ClientsPage() {
   }
 
   useEffect(() => {
-    fetchClients()
+    fetchProducts()
   }, [page, search])
 
   const handleSearch = (value: string) => {
@@ -49,54 +72,54 @@ export function ClientsPage() {
     setPage(1)
   }
 
-  const handleCreateClient = () => {
-    setEditingClient(null)
+  const handleCreateProduct = () => {
+    setEditingProduct(null)
     setIsDialogOpen(true)
   }
 
-  const handleEditClient = (client: Client) => {
-    setEditingClient(client)
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product)
     setIsDialogOpen(true)
   }
 
-  const handleDeleteClient = async (id: number) => {
+  const handleDeleteProduct = async (id: number) => {
     try {
-      await apiService.deleteClient(id)
+      await apiService.deleteProduct(id)
       toast({
         title: "Éxito",
-        description: "Cliente eliminado correctamente",
+        description: "Producto eliminado correctamente",
       })
-      fetchClients()
+      fetchProducts()
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo eliminar el cliente",
+        description: "No se pudo eliminar el producto",
         variant: "destructive",
       })
     }
   }
 
-  const handleSaveClient = async (data: Partial<Client>) => {
+  const handleSaveProduct = async (data: Partial<Product>) => {
     try {
-      if (editingClient) {
-        await apiService.updateClient(editingClient.id, data)
+      if (editingProduct) {
+        await apiService.updateProduct(editingProduct.id, data)
         toast({
           title: "Éxito",
-          description: "Cliente actualizado correctamente",
+          description: "Producto actualizado correctamente",
         })
       } else {
-        await apiService.createClient(data)
+        await apiService.createProduct(data)
         toast({
           title: "Éxito",
-          description: "Cliente creado correctamente",
+          description: "Producto creado correctamente",
         })
       }
       setIsDialogOpen(false)
-      fetchClients()
+      fetchProducts()
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo guardar el cliente",
+        description: "No se pudo guardar el producto",
         variant: "destructive",
       })
     }
@@ -110,8 +133,8 @@ export function ClientsPage() {
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <div className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            <h1 className="text-lg font-semibold">Clientes</h1>
+            <Package className="h-5 w-5" />
+            <h1 className="text-lg font-semibold">Productos y Servicios</h1>
           </div>
         </header>
         <div className="flex flex-col items-center justify-center h-screen">
@@ -127,10 +150,7 @@ export function ClientsPage() {
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <div className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          <h1 className="text-lg font-semibold">Clientes</h1>
-        </div>
+        <h1 className="text-lg font-semibold">Productos y Servicios</h1>
       </header>
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="flex items-center justify-between">
@@ -138,34 +158,34 @@ export function ClientsPage() {
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Buscar clientes..."
+                placeholder="Buscar productos..."
                 value={search}
                 onChange={(e) => handleSearch(e.target.value)}
                 className="pl-8 w-[300px]"
               />
             </div>
           </div>
-          <Button onClick={handleCreateClient} className="bg-blue-500 text-white hover:bg-blue-700 cursor-pointer">
+          <Button onClick={handleCreateProduct} className="bg-blue-500 text-white hover:bg-blue-700 cursor-pointer">
             <Plus className="mr-2 h-4 w-4" />
-            Nuevo Cliente
+            Nuevo Producto
           </Button>
         </div>
 
-        <ClientsTable
-          clients={clients}
+        <ProductsTable
+          products={products}
           loading={loading}
-          onEdit={handleEditClient}
-          onDelete={handleDeleteClient}
+          onEdit={handleEditProduct}
+          onDelete={handleDeleteProduct}
           page={page}
           totalPages={totalPages}
           onPageChange={setPage}
         />
 
-        <ClientDialog
+        <ProductDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
-          client={editingClient}
-          onSave={handleSaveClient}
+          product={editingProduct}
+          onSave={handleSaveProduct}
         />
       </div>
     </SidebarInset>
