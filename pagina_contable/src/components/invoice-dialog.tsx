@@ -16,11 +16,28 @@ import { Plus, Trash2 } from "lucide-react"
 import type { Invoice, Client, Product, InvoiceItem } from "@/services/api"
 import { apiService } from "@/services/api"
 
+interface InvoiceFormData {
+  client_id: number
+  invoice_number: string
+  date: string
+  due_date: string
+  status: "draft" | "sent" | "paid" | "overdue"
+  subtotal: number
+  tax: number
+  total: number
+  items: {
+    product_id: number
+    quantity: number
+    unit_price: number
+    total: number
+  }[]
+}
+
 interface InvoiceDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   invoice: Invoice | null
-  onSave: (data: Partial<Invoice>) => void
+  onSave: (data: InvoiceFormData | Partial<Invoice>) => void // Usar el nuevo tipo
 }
 
 export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDialogProps) {
@@ -49,7 +66,16 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
         due_date: invoice.due_date,
         status: invoice.status,
       })
-      setItems(invoice.items || [])
+      
+      // Normalizar los items
+      const normalizedItems = (invoice.items || []).map(item => ({
+        ...item,
+        quantity: formatNumber(item.quantity),
+        unit_price: formatNumber(item.unit_price),
+        total: formatNumber(item.total),
+      }))
+      
+      setItems(normalizedItems)
     } else {
       const today = new Date().toISOString().split("T")[0]
       const dueDate = new Date()
@@ -84,21 +110,67 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const subtotal = items.reduce((sum, item) => sum + (item.total || 0), 0)
-    const tax = subtotal * 0.12 // 12% IVA
+    
+    // Validaciones básicas
+    if (!formData.client_id) {
+      alert('Por favor selecciona un cliente')
+      return
+    }
+
+    if (!formData.date || !formData.due_date) {
+      alert('Por favor completa las fechas')
+      return
+    }
+
+    const validItems = items.filter(item => item.product?.id && item.quantity && item.unit_price)
+    
+    if (validItems.length === 0) {
+      alert('Por favor agrega al menos un producto válido')
+      return
+    }
+
+    const subtotal = validItems.reduce((sum, item) => sum + (item.total || 0), 0)
+    const tax = subtotal * 0.12
     const total = subtotal + tax
 
-    // Busca el cliente seleccionado
-    const selectedClient = clients.find(c => c.id.toString() === formData.client_id)
+    // Generar número de factura automático
+    const generateInvoiceNumber = () => {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const timestamp = now.getTime().toString().slice(-6) // Últimos 6 dígitos del timestamp
+      return `INV-${year}${month}-${timestamp}`
+    }
 
-    onSave({
-      ...formData,
-      client: selectedClient,
-      items: items as InvoiceItem[],
-      subtotal,
-      tax,
-      total,
-    })
+    const invoiceNumber = invoice ? invoice.invoice_number : generateInvoiceNumber()
+
+    // Buscar el cliente seleccionado
+    const selectedClient = clients.find(c => c.id.toString() === formData.client_id)
+    
+    if (!selectedClient) {
+      alert('Cliente no encontrado')
+      return
+    }
+
+    // Preparar los datos con el formato correcto
+    const invoiceData = {
+      client_id: parseInt(formData.client_id), // Enviar solo el ID del cliente
+      invoice_number: invoiceNumber,
+      date: formData.date,
+      due_date: formData.due_date,
+      status: formData.status,
+      subtotal: parseFloat(subtotal.toFixed(2)),
+      tax: parseFloat(tax.toFixed(2)),
+      total: parseFloat(total.toFixed(2)),
+      items: validItems.map(item => ({
+        product_id: parseInt(item.product!.id.toString()), // Enviar solo el ID del producto
+        quantity: parseInt(item.quantity?.toString() || '1'),
+        unit_price: parseFloat(item.unit_price?.toString() || '0'),
+        total: parseFloat((item.total || 0).toFixed(2)),
+      })),
+    }
+
+    onSave(invoiceData)
   }
 
   const addItem = () => {
@@ -114,21 +186,33 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
     newItems[index] = { ...newItems[index], [field]: value }
 
     if (field === "product") {
-      const product = products.find((p) => p.id === Number.parseInt(value))
+      const product = products.find((p) => p.id === Number(value))
       if (product) {
+        newItems[index].product = product // Mantener objeto producto completo
         newItems[index].unit_price = product.price
         newItems[index].total = (newItems[index].quantity || 1) * product.price
       }
     } else if (field === "quantity" || field === "unit_price") {
-      const quantity = newItems[index].quantity || 0
-      const unitPrice = newItems[index].unit_price || 0
+      const quantity = Number(newItems[index].quantity) || 0
+      const unitPrice = Number(newItems[index].unit_price) || 0
       newItems[index].total = quantity * unitPrice
     }
 
     setItems(newItems)
   }
 
-  const subtotal = items.reduce((sum, item) => sum + (item.total || 0), 0)
+  // Función helper para manejar números de forma segura
+  const formatNumber = (value: number | string | null | undefined): number => {
+    if (typeof value === 'number' && !isNaN(value)) return value
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value)
+      return isNaN(parsed) ? 0 : parsed
+    }
+    return 0
+  }
+
+  // Cálculos finales
+  const subtotal = items.reduce((sum, item) => sum + formatNumber(item.total), 0)
   const tax = subtotal * 0.12
   const total = subtotal + tax
 
@@ -177,7 +261,7 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">Borrador</SelectItem>
+                    <SelectItem value="draft">Pendiente</SelectItem>
                     <SelectItem value="sent">Enviada</SelectItem>
                     <SelectItem value="paid">Pagada</SelectItem>
                     <SelectItem value="overdue">Vencida</SelectItem>
@@ -211,7 +295,7 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Items de la Factura</CardTitle>
-                  <Button type="button" variant="outline" size="sm" onClick={addItem}>
+                  <Button type="button" variant="outline" size="sm" className="bg-blue-500 hover:bg-blue-600 cursor-pointer" onClick={addItem}>
                     <Plus className="h-4 w-4 mr-2" />
                     Agregar Item
                   </Button>
@@ -259,13 +343,14 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
                       </div>
                       <div className="col-span-2">
                         <Label>Total</Label>
-                        <Input value={`$${(item.total || 0).toFixed(2)}`} disabled />
+                        <Input value={`$${formatNumber(item.total).toFixed(2)}`} disabled />
                       </div>
                       <div className="col-span-2">
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
+                          className="bg-red-500 hover:bg-red-600 cursor-pointer"
                           onClick={() => removeItem(index)}
                           disabled={items.length === 1}
                         >

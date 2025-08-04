@@ -7,23 +7,37 @@ interface ExpenseStatsProps {
 }
 
 export function ExpenseStats({ expenses }: ExpenseStatsProps) {
+  // Función helper para manejar números de forma segura
+  const formatNumber = (value: number | string | null | undefined): number => {
+    if (typeof value === 'number' && !isNaN(value)) return value
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value)
+      return isNaN(parsed) ? 0 : parsed
+    }
+    return 0
+  }
+
+  // Validar que expenses sea un array
+  const safeExpenses = Array.isArray(expenses) ? expenses : []
+
   const currentMonth = new Date().getMonth()
   const currentYear = new Date().getFullYear()
 
-  const monthlyExpenses = expenses.filter((expense) => {
+  const monthlyExpenses = safeExpenses.filter((expense) => {
     const expenseDate = new Date(expense.date)
     return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear
   })
 
-  const totalMonthly = monthlyExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+  // Usar formatNumber para asegurar que amount sea un número
+  const totalMonthly = monthlyExpenses.reduce((sum, expense) => sum + formatNumber(expense.amount), 0)
   const averageExpense = monthlyExpenses.length > 0 ? totalMonthly / monthlyExpenses.length : 0
 
-  const categories = [...new Set(expenses.map((expense) => expense.category))]
+  const categories = [...new Set(safeExpenses.map((expense) => expense.category))]
   const topCategory = categories.reduce(
     (top, category) => {
-      const categoryTotal = expenses
+      const categoryTotal = safeExpenses
         .filter((expense) => expense.category === category)
-        .reduce((sum, expense) => sum + expense.amount, 0)
+        .reduce((sum, expense) => sum + formatNumber(expense.amount), 0)
       return categoryTotal > top.amount ? { category, amount: categoryTotal } : top
     },
     { category: "N/A", amount: 0 },
@@ -32,7 +46,7 @@ export function ExpenseStats({ expenses }: ExpenseStatsProps) {
   const stats = [
     {
       title: "Gastos del Mes",
-      value: `$${totalMonthly.toLocaleString()}`,
+      value: `$${totalMonthly.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       description: `${monthlyExpenses.length} gastos registrados`,
       icon: DollarSign,
     },
@@ -45,7 +59,7 @@ export function ExpenseStats({ expenses }: ExpenseStatsProps) {
     {
       title: "Categoría Principal",
       value: topCategory.category,
-      description: `$${topCategory.amount.toFixed(2)} total`,
+      description: `$${formatNumber(topCategory.amount).toFixed(2)} total`, // Usar formatNumber aquí
       icon: Tag,
     },
     {

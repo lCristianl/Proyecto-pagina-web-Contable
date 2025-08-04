@@ -21,11 +21,35 @@ export function DashboardStats() {
   })
   const [loading, setLoading] = useState(true)
 
+  // Función helper para formatear números de forma segura
+  const formatCurrency = (value: number | null | undefined): string => {
+    const numValue = typeof value === 'number' ? value : 0
+    return numValue.toLocaleString('es-ES', {
+      style: 'currency',
+      currency: 'USD'
+    })
+  }
+
+  const formatNumber = (value: number | null | undefined): string => {
+    const numValue = typeof value === 'number' ? value : 0
+    return numValue.toString()
+  }
+
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         const response = await apiService.get<DashboardData>("/dashboard/stats/")
-        setData(response.data)
+        
+        // Validar y normalizar los datos recibidos
+        const normalizedData = {
+          monthlyRevenue: Number(response.data?.monthlyRevenue) || 0,
+          monthlyExpenses: Number(response.data?.monthlyExpenses) || 0,
+          netProfit: Number(response.data?.netProfit) || 0,
+          pendingInvoices: Number(response.data?.pendingInvoices) || 0,
+        }
+        
+        //console.log('Dashboard data received:', normalizedData)
+        setData(normalizedData)
       } catch (error) {
         console.error("Error fetching dashboard data:", error)
         // Datos de ejemplo para demostración
@@ -46,28 +70,28 @@ export function DashboardStats() {
   const stats = [
     {
       title: "Ventas del Mes",
-      value: `$${data.monthlyRevenue.toLocaleString()}`,
+      value: formatCurrency(data.monthlyRevenue),
       description: "+20.1% respecto al mes anterior",
       icon: TrendingUp,
       trend: "up",
     },
     {
       title: "Gastos del Mes",
-      value: `$${data.monthlyExpenses.toLocaleString()}`,
+      value: formatCurrency(data.monthlyExpenses),
       description: "-5.2% respecto al mes anterior",
       icon: TrendingDown,
       trend: "down",
     },
     {
       title: "Ganancia Neta",
-      value: `$${data.netProfit.toLocaleString()}`,
+      value: formatCurrency(data.netProfit),
       description: "+12.5% respecto al mes anterior",
       icon: DollarSign,
       trend: "up",
     },
     {
       title: "Facturas Pendientes",
-      value: data.pendingInvoices.toString(),
+      value: formatNumber(data.pendingInvoices),
       description: "Por cobrar este mes",
       icon: FileText,
       trend: "neutral",

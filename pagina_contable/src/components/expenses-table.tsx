@@ -16,7 +16,7 @@ interface ExpensesTableProps {
 }
 
 export function ExpensesTable({
-  expenses,
+  expenses = [], // Valor por defecto
   loading,
   onEdit,
   onDelete,
@@ -24,6 +24,19 @@ export function ExpensesTable({
   totalPages,
   onPageChange,
 }: ExpensesTableProps) {
+  // Función helper para formatear números de forma segura
+  const formatNumber = (value: number | string | null | undefined): number => {
+    if (typeof value === 'number' && !isNaN(value)) return value
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value)
+      return isNaN(parsed) ? 0 : parsed
+    }
+    return 0
+  }
+
+  // Validar que expenses sea un array
+  const safeExpenses = Array.isArray(expenses) ? expenses : []
+
   const getCategoryColor = (category: string) => {
     const colors = {
       Alquiler: "bg-blue-100 text-blue-800",
@@ -79,31 +92,31 @@ export function ExpensesTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {expenses.length === 0 ? (
+            {safeExpenses.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   No se encontraron gastos
                 </TableCell>
               </TableRow>
             ) : (
-              expenses.map((expense) => (
+              safeExpenses.map((expense) => (
                 <TableRow key={expense.id}>
                   <TableCell>
                     <Badge className={getCategoryColor(expense.category)}>{expense.category}</Badge>
                   </TableCell>
                   <TableCell className="max-w-xs truncate">{expense.description}</TableCell>
                   <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
-                  <TableCell className="font-medium">${expense.amount.toFixed(2)}</TableCell>
+                  <TableCell className="font-medium">${formatNumber(expense.amount).toFixed(2)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => onEdit(expense)}>
+                      <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 cursor-pointer" onClick={() => onEdit(expense)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => onDelete(expense.id)}
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive bg-red-500 hover:bg-red-600 cursor-pointer"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

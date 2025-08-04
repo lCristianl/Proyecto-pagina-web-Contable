@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2, Eye, Download } from "lucide-react"
 import type { Invoice } from "@/services/api"
-import { Pagination } from "@/components/ui/pagination"
+import { Pagination } from "@/components/pagination"
 
 interface InvoicesTableProps {
   invoices: Invoice[]
@@ -16,7 +16,7 @@ interface InvoicesTableProps {
 }
 
 export function InvoicesTable({
-  invoices,
+  invoices = [], // Valor por defecto
   loading,
   onEdit,
   onDelete,
@@ -42,6 +42,9 @@ export function InvoicesTable({
         return <Badge variant="outline">Desconocido</Badge>
     }
   }
+
+  // Validación adicional
+  const safeInvoices = Array.isArray(invoices) ? invoices : []
 
   if (loading) {
     return (
@@ -90,21 +93,21 @@ export function InvoicesTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {invoices.length === 0 ? (
+            {safeInvoices.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                   No se encontraron facturas
                 </TableCell>
               </TableRow>
             ) : (
-              invoices.map((invoice) => (
+              safeInvoices.map((invoice) => (
                 <TableRow key={invoice.id}>
                   <TableCell className="font-medium">{invoice.invoice_number}</TableCell>
-                  <TableCell>{invoice.client.name}</TableCell>
+                  <TableCell>{invoice.client?.name || 'Sin cliente'}</TableCell>
                   <TableCell>{new Date(invoice.date).toLocaleDateString()}</TableCell>
                   <TableCell>{new Date(invoice.due_date).toLocaleDateString()}</TableCell>
                   <TableCell>{getStatusBadge(invoice.status)}</TableCell>
-                  <TableCell className="font-medium">${invoice.total.toFixed(2)}</TableCell>
+                  <TableCell className="font-medium">${Number(invoice.total || 0).toFixed(2)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" size="sm">
@@ -113,14 +116,14 @@ export function InvoicesTable({
                       <Button variant="outline" size="sm">
                         <Download className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => onEdit(invoice)}>
+                      <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 cursor-pointer" onClick={() => onEdit(invoice)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => onDelete(invoice.id)}
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive bg-red-500 hover:bg-red-600 cursor-pointer"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

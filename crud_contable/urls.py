@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from django.urls import path, include
+from django.urls import path
 from .views import ClientViewSet, ProductViewSet, InvoiceViewSet, ExpenseViewSet, dashboard_stats
 
 router = DefaultRouter()

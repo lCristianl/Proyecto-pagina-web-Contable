@@ -8,7 +8,7 @@ import { InvoicesTable } from "@/components/invoices-table"
 import { InvoiceDialog } from "@/components/invoice-dialog"
 import { apiService, type Invoice } from "@/services/api"
 import { useToast } from "@/hooks/use-toast"
-import { ClipLoader } from "react-spinners" // Añadir esta importación
+import { ClipLoader } from "react-spinners"
 
 export function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
@@ -87,14 +87,24 @@ export function InvoicesPage() {
   }
 
   const handleDeleteInvoice = async (id: number) => {
+    const confirmDelete = window.confirm(
+      '¿Estás seguro de que quieres eliminar esta factura? Esta acción no se puede deshacer.'
+    )
+    
+    if (!confirmDelete) {
+      return
+    }
+
     try {
       await apiService.deleteInvoice(id)
       toast({
         title: "Éxito",
         description: "Factura eliminada correctamente",
       })
+      // Refrescar la lista inmediatamente
       fetchInvoices()
     } catch (error) {
+      console.error('Error al eliminar factura:', error)
       toast({
         title: "Error",
         description: "No se pudo eliminar la factura",
@@ -103,15 +113,21 @@ export function InvoicesPage() {
     }
   }
 
-  const handleSaveInvoice = async (data: Partial<Invoice>) => {
+  const handleSaveInvoice = async (data: any) => {
     try {
       if (editingInvoice) {
-        await apiService.updateInvoice(editingInvoice.id, data)
+        // Para actualizar, convertir a formato Invoice
+        const updateData = {
+          ...data,
+          client: editingInvoice.client, // Mantener objeto cliente para actualización
+        }
+        await apiService.updateInvoice(editingInvoice.id, updateData)
         toast({
           title: "Éxito",
           description: "Factura actualizada correctamente",
         })
       } else {
+        // Para crear, usar datos tal como vienen
         await apiService.createInvoice(data)
         toast({
           title: "Éxito",
@@ -121,6 +137,7 @@ export function InvoicesPage() {
       setIsDialogOpen(false)
       fetchInvoices()
     } catch (error) {
+      console.error('Error completo:', error)
       toast({
         title: "Error",
         description: "No se pudo guardar la factura",

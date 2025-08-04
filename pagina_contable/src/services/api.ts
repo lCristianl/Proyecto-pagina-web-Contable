@@ -42,10 +42,72 @@ class ApiService {
 
     try {
       const response = await fetch(url, config)
-      const data = await response.json()
+      
+      // Para operaciones DELETE exitosas (204 No Content), no intentar parsear JSON
+      if (response.status === 204) {
+        return {
+          data: {} as T,
+          status: response.status,
+          message: 'Success',
+        }
+      }
+
+      // Para respuestas exitosas sin contenido
+      if (response.ok && response.status === 200) {
+        const text = await response.text()
+        if (!text.trim()) {
+          return {
+            data: {} as T,
+            status: response.status,
+            message: 'Success',
+          }
+        }
+        // Si hay contenido, intentar parsearlo como JSON
+        try {
+          const data = JSON.parse(text)
+          return {
+            data,
+            status: response.status,
+            message: data.message,
+          }
+        } catch (jsonError) {
+          console.error('Error parsing JSON:', jsonError)
+          return {
+            data: {} as T,
+            status: response.status,
+            message: 'Success',
+          }
+        }
+      }
+
+      // Para el resto de respuestas, intentar parsear JSON
+      let data
+      try {
+        data = await response.json()
+      } catch (jsonError) {
+        if (response.ok) {
+          // Si la respuesta es exitosa pero no hay JSON válido
+          return {
+            data: {} as T,
+            status: response.status,
+            message: 'Success',
+          }
+        } else {
+          // Si hay error y no se puede parsear JSON
+          console.error('Error parsing error response:', jsonError)
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`)
+        console.error('API Error Details:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: url,
+          responseData: data,
+        })
+        
+        throw new Error(data.message || data.detail || `HTTP error! status: ${response.status}`)
       }
 
       return {
@@ -142,7 +204,7 @@ class ApiService {
     return this.get<Invoice>(`/invoices/${id}/`)
   }
 
-  async createInvoice(data: Partial<Invoice>) {
+  async createInvoice(data: CreateInvoiceData | Partial<Invoice>) {
     return this.post<Invoice>("/invoices/", data)
   }
 
@@ -231,6 +293,24 @@ export interface Expense {
   description: string
   created_at: string
   updated_at: string
+}
+
+// Agregar tipo específico para crear facturas
+export interface CreateInvoiceData {
+  client_id: number
+  invoice_number: string
+  date: string
+  due_date: string
+  status: "draft" | "sent" | "paid" | "overdue"
+  subtotal: number
+  tax: number
+  total: number
+  items: {
+    product_id: number
+    quantity: number
+    unit_price: number
+    total: number
+  }[]
 }
 
 export const apiService = new ApiService(API_BASE_URL)

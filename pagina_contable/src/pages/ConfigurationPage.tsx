@@ -206,7 +206,7 @@ export function ConfigurationPage() {
                     Sube el logo de tu empresa (formato PNG, JPG, máximo 2MB)
                   </p>
                 </div>
-                <Button onClick={handleSaveCompanyInfo}>Guardar Información</Button>
+                <Button onClick={handleSaveCompanyInfo} className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer">Guardar Información</Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -282,7 +282,7 @@ export function ConfigurationPage() {
                     rows={3}
                   />
                 </div>
-                <Button onClick={handleSaveInvoiceSettings}>Guardar Configuración</Button>
+                <Button onClick={handleSaveInvoiceSettings} className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer">Guardar Configuración</Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -338,7 +338,7 @@ export function ConfigurationPage() {
                     onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, reportAlerts: checked }))}
                   />
                 </div>
-                <Button onClick={handleSaveNotifications}>Guardar Configuración</Button>
+                <Button onClick={handleSaveNotifications} className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer">Guardar Configuración</Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -404,7 +404,7 @@ export function ConfigurationPage() {
                     <Input type="password" placeholder="Confirmar nueva contraseña" />
                   </div>
                 </div>
-                <Button onClick={handleSaveSecurity}>Guardar Configuración</Button>
+                <Button onClick={handleSaveSecurity} className="bg-blue-500 hover:bg-blue-600 text-white cursor-pointer">Guardar Configuración</Button>
               </CardContent>
             </Card>
           </TabsContent>

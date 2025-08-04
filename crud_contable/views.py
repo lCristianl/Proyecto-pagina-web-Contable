@@ -1,9 +1,13 @@
 from django.shortcuts import render
-from rest_framework import viewsets, filters
-from .models import Client, Product, Invoice, Expense
-from .serializers import ClientSerializer, ProductSerializer, InvoiceSerializer, ExpenseSerializer
-from rest_framework.decorators import api_view
+from rest_framework import viewsets, filters, status
 from rest_framework.response import Response
+from .models import Client, Product, Invoice, Expense
+from .serializers import (
+    ClientSerializer, ProductSerializer, 
+    InvoiceSerializer, InvoiceCreateSerializer,  # Importar ambos serializers
+    ExpenseSerializer
+)
+from rest_framework.decorators import api_view
 from django.utils import timezone
 from django.db.models import Sum
 
@@ -22,9 +26,34 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 class InvoiceViewSet(viewsets.ModelViewSet):
     queryset = Invoice.objects.all().order_by('-created_at')
-    serializer_class = InvoiceSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['invoice_number', 'client__name']
+    
+    def get_serializer_class(self):
+        # Usar diferentes serializers para crear y leer
+        if self.action == 'create':
+            return InvoiceCreateSerializer
+        return InvoiceSerializer
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        invoice = serializer.save()
+        
+        # Retornar la factura con el serializer de lectura
+        response_serializer = InvoiceSerializer(invoice)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+    def destroy(self, request, *args, **kwargs):
+        try:
+            instance = self.get_object()
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Invoice.DoesNotExist:
+            return Response(
+                {'error': 'Factura no encontrada'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 class ExpenseViewSet(viewsets.ModelViewSet):
     queryset = Expense.objects.all().order_by('-created_at')

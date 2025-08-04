@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2, Package, Wrench } from "lucide-react"
 import type { Product } from "@/services/api"
-import { Pagination } from "@/components/ui/pagination"
+import { Pagination } from "@/components/pagination"
 
 interface ProductsTableProps {
   products: Product[]
@@ -112,18 +112,18 @@ export function ProductsTable({
                       {product.type === "product" ? "Producto" : "Servicio"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-medium">${product.price.toFixed(2)}</TableCell>
+                  <TableCell className="font-medium">${Number(product.price || 0).toFixed(2)}</TableCell>
                   <TableCell className="max-w-xs truncate">{product.description}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => onEdit(product)}>
+                      <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 cursor-pointer" onClick={() => onEdit(product)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => onDelete(product.id)}
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive bg-red-500 hover:bg-red-600 cursor-pointer"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
