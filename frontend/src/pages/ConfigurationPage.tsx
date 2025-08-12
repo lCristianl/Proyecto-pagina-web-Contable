@@ -201,7 +201,7 @@ export function ConfigurationPage() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="logo">Logo de la Empresa</Label>
-                  <Input id="logo" type="file" accept="image/*" />
+                  <Input id="logo" type="file" accept="image/*" className="cursor-pointer" />
                   <p className="text-sm text-muted-foreground">
                     Sube el logo de tu empresa (formato PNG, JPG, máximo 2MB)
                   </p>
@@ -239,7 +239,7 @@ export function ConfigurationPage() {
                     <Label htmlFor="currency">Moneda</Label>
                     <Select
                       value={invoiceSettings.currency}
-                      onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, currency: value }))}
+                      onValueChange={(value: string) => setInvoiceSettings((prev) => ({ ...prev, currency: value }))}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -365,7 +365,7 @@ export function ConfigurationPage() {
                     <Label htmlFor="sessionTimeout">Tiempo de Sesión (minutos)</Label>
                     <Select
                       value={security.sessionTimeout}
-                      onValueChange={(value) => setSecurity((prev) => ({ ...prev, sessionTimeout: value }))}
+                      onValueChange={(value: string) => setSecurity((prev) => ({ ...prev, sessionTimeout: value }))}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -382,7 +382,7 @@ export function ConfigurationPage() {
                     <Label htmlFor="passwordExpiry">Expiración de Contraseña (días)</Label>
                     <Select
                       value={security.passwordExpiry}
-                      onValueChange={(value) => setSecurity((prev) => ({ ...prev, passwordExpiry: value }))}
+                      onValueChange={(value: string) => setSecurity((prev) => ({ ...prev, passwordExpiry: value }))}
                     >
                       <SelectTrigger>
                         <SelectValue />
