@@ -319,7 +319,7 @@ export interface Client {
 export interface Supplier {
   id: number
   name: string
-  ruc_cedula: string
+  ruc: string
   address: string
   email: string
   phone: string
