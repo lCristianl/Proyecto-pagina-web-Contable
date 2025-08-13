@@ -4,7 +4,10 @@ import { Toaster } from "@/components/ui/toaster"
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { Dashboard } from "./pages/DashboardPage"
 import { ClientsPage } from "./pages/ClientsPage"
+import { SuppliersPage } from "./pages/SuppliersPage"
 import { ProductsPage } from "./pages/ProductsPage"
+import { InventoryPage } from "./pages/InventoryPage"
+import { PurchasesPage } from "./pages/PurchasesPage"
 import { InvoicesPage } from "./pages/InvoicesPage"
 import { ExpensesPage } from "./pages/ExpensesPage"
 import { ConfigurationPage } from "./pages/ConfigurationPage"
@@ -19,7 +22,10 @@ function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/clientes" element={<ClientsPage />} />
+            <Route path="/proveedores" element={<SuppliersPage />} />
             <Route path="/productos" element={<ProductsPage />} />
+            <Route path="/inventario" element={<InventoryPage />} />
+            <Route path="/compras" element={<PurchasesPage />} />
             <Route path="/facturas" element={<InvoicesPage />} />
             <Route path="/gastos" element={<ExpensesPage />} />
             <Route path="/reportes" element={<ReportsPage />} />

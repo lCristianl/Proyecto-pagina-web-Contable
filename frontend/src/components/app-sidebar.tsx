@@ -1,5 +1,16 @@
-"use client"
-import { BarChart3, Calculator, FileText, Home, Package, Receipt, Settings, Users } from "lucide-react"
+import {
+  BarChart3,
+  Calculator,
+  FileText,
+  Home,
+  Package,
+  Receipt,
+  Settings,
+  Users,
+  Truck,
+  ShoppingCart,
+  Warehouse,
+} from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 
 import {
@@ -27,9 +38,24 @@ const navigationItems = [
     icon: Users,
   },
   {
+    title: "Proveedores",
+    url: "/proveedores",
+    icon: Truck,
+  },
+  {
     title: "Productos/Servicios",
     url: "/productos",
     icon: Package,
+  },
+  {
+    title: "Inventario",
+    url: "/inventario",
+    icon: Warehouse,
+  },
+  {
+    title: "Compras",
+    url: "/compras",
+    icon: ShoppingCart,
   },
   {
     title: "Facturación",
