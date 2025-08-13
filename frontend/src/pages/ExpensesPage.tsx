@@ -9,7 +9,7 @@ import { ExpenseDialog } from "@/components/expenses/expense-dialog"
 import { ExpenseStats } from "@/components/expenses/expense-stats"
 import { apiService, type Expense } from "@/services/api"
 import { useToast } from "@/hooks/use-toast"
-import { ClipLoader } from "react-spinners" // Añadir esta importación
+import { ClipLoader } from "react-spinners"
 
 export function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
