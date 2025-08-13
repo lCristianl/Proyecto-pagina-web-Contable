@@ -73,7 +73,7 @@ export function SuppliersTable({
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
-              <TableHead>RUC/Cédula</TableHead>
+              <TableHead>RUC</TableHead>
               <TableHead>Contacto</TableHead>
               <TableHead>Dirección</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
@@ -91,7 +91,7 @@ export function SuppliersTable({
                 <TableRow key={supplier.id}>
                   <TableCell className="font-medium">{supplier.name}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{supplier.ruc_cedula}</Badge>
+                    <Badge variant="outline">{supplier.ruc || "N/A"}</Badge>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
@@ -108,14 +108,14 @@ export function SuppliersTable({
                   <TableCell className="max-w-xs truncate">{supplier.address}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => onEdit(supplier)}>
+                      <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 cursor-pointer" onClick={() => onEdit(supplier)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => onDelete(supplier.id)}
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive bg-red-500 hover:bg-red-600 cursor-pointer"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

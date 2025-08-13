@@ -25,7 +25,7 @@ interface SupplierDialogProps {
 export function SupplierDialog({ open, onOpenChange, supplier, onSave }: SupplierDialogProps) {
   const [formData, setFormData] = useState({
     name: "",
-    ruc_cedula: "",
+    ruc: "",
     address: "",
     email: "",
     phone: "",
@@ -35,7 +35,7 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSave }: Supplie
     if (supplier) {
       setFormData({
         name: supplier.name,
-        ruc_cedula: supplier.ruc_cedula,
+        ruc: supplier.ruc || "",
         address: supplier.address,
         email: supplier.email,
         phone: supplier.phone,
@@ -43,7 +43,7 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSave }: Supplie
     } else {
       setFormData({
         name: "",
-        ruc_cedula: "",
+        ruc: "",
         address: "",
         email: "",
         phone: "",
@@ -52,9 +52,9 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSave }: Supplie
   }, [supplier, open])
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSave(formData)
-  }
+      e.preventDefault()
+      onSave({ ...formData, ruc: formData.ruc.trim() === "" ? "N/A" : formData.ruc })
+    }
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -84,13 +84,12 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSave }: Supplie
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="ruc_cedula">RUC/Cédula *</Label>
+              <Label htmlFor="ruc">RUC</Label>
               <Input
-                id="ruc_cedula"
-                value={formData.ruc_cedula}
-                onChange={(e) => handleChange("ruc_cedula", e.target.value)}
-                placeholder="1234567890"
-                required
+                id="ruc"
+                value={formData.ruc}
+                onChange={(e) => handleChange("ruc", e.target.value)}
+                placeholder="RUC (opcional)"
               />
             </div>
             <div className="grid gap-2">
@@ -125,10 +124,12 @@ export function SupplierDialog({ open, onOpenChange, supplier, onSave }: Supplie
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" className="bg-red-500 text-white hover:bg-red-700 cursor-pointer" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">{supplier ? "Actualizar" : "Crear"}</Button>
+            <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-700 cursor-pointer">
+              {supplier ? "Actualizar" : "Crear"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

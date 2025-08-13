@@ -88,9 +88,15 @@ export function PurchaseDialog({ open, onOpenChange, purchase, onSave }: Purchas
     const tax = subtotal * 0.12 // 12% IVA
     const total = subtotal + tax
 
+    const supplier = suppliers.find((s) => s.id === Number(formData.supplier_id))
+    if (!supplier) {
+      alert('Proveedor no encontrado')
+      return
+    }
+
     onSave({
       ...formData,
-      supplier_id: Number.parseInt(formData.supplier_id),
+      supplier,
       items: items as PurchaseItem[],
       subtotal,
       tax,
@@ -111,8 +117,9 @@ export function PurchaseDialog({ open, onOpenChange, purchase, onSave }: Purchas
     newItems[index] = { ...newItems[index], [field]: value }
 
     if (field === "product") {
-      const product = products.find((p) => p.id === Number.parseInt(value))
+      const product = products.find((p) => p.id === Number(value))
       if (product) {
+        newItems[index].product = product // Asignar el objeto completo del producto
         newItems[index].unit_price = product.price
         newItems[index].total = (newItems[index].quantity || 1) * product.price
       }
@@ -214,7 +221,7 @@ export function PurchaseDialog({ open, onOpenChange, purchase, onSave }: Purchas
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Items de la Compra</CardTitle>
-                  <Button type="button" variant="outline" size="sm" onClick={addItem}>
+                  <Button type="button" variant="outline" size="sm" className="bg-blue-500 hover:bg-blue-600 cursor-pointer" onClick={addItem}>
                     <Plus className="h-4 w-4 mr-2" />
                     Agregar Item
                   </Button>
@@ -227,11 +234,13 @@ export function PurchaseDialog({ open, onOpenChange, purchase, onSave }: Purchas
                       <div className="col-span-4">
                         <Label>Producto</Label>
                         <Select
-                          value={item.product?.id?.toString() || ""}
-                          onValueChange={(value) => updateItem(index, "product", value)}
+                          value={item.product?.id?.toString() || ""} // Mostrar el ID del producto seleccionado
+                          onValueChange={(value: string) => updateItem(index, "product", value)}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Selecciona..." />
+                            <SelectValue placeholder="Selecciona...">
+                              {item.product ? item.product.name : "Selecciona..."} {/* Mostrar el nombre del producto seleccionado */}
+                            </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             {products.map((product) => (
@@ -269,6 +278,7 @@ export function PurchaseDialog({ open, onOpenChange, purchase, onSave }: Purchas
                           type="button"
                           variant="outline"
                           size="sm"
+                          className="bg-red-500 hover:bg-red-600 cursor-pointer"
                           onClick={() => removeItem(index)}
                           disabled={items.length === 1}
                         >
@@ -298,10 +308,12 @@ export function PurchaseDialog({ open, onOpenChange, purchase, onSave }: Purchas
             </Card>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" className="bg-red-500 text-white hover:bg-red-700 cursor-pointer" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">{purchase ? "Actualizar" : "Crear"}</Button>
+            <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-700 cursor-pointer">
+              {purchase ? "Actualizar" : "Crear"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
