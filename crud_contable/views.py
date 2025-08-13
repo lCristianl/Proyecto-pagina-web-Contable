@@ -1,31 +1,46 @@
 from django.shortcuts import render
-from rest_framework import viewsets, filters, status
+from rest_framework import viewsets, filters, status, views
 from rest_framework.response import Response
-from .models import Client, Product, Invoice, Expense
+from rest_framework.pagination import PageNumberPagination
+from .models import (
+    Client, Product, Invoice, Expense,
+    Supplier, InventoryProduct, InventoryMovement,
+    Purchase
+)
 from .serializers import (
     ClientSerializer, ProductSerializer, 
-    InvoiceSerializer, InvoiceCreateSerializer,  # Importar ambos serializers
-    ExpenseSerializer
+    InvoiceSerializer, InvoiceCreateSerializer, 
+    ExpenseSerializer, 
+    SupplierSerializer, InventoryProductSerializer, InventoryMovementSerializer, 
+    InventoryAdjustmentSerializer, PurchaseSerializer, CreatePurchaseSerializer
 )
 from rest_framework.decorators import api_view
 from django.utils import timezone
 from django.db.models import Sum
 
 # Create your views here.
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
 class ClientViewSet(viewsets.ModelViewSet):
     queryset = Client.objects.all().order_by('-created_at')
     serializer_class = ClientSerializer
+    pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'ruc', 'cedula', 'email', 'phone']
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all().order_by('-created_at')
     serializer_class = ProductSerializer
+    pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'code']
 
 class InvoiceViewSet(viewsets.ModelViewSet):
     queryset = Invoice.objects.all().order_by('-created_at')
+    pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['invoice_number', 'client__name']
     
@@ -58,8 +73,59 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 class ExpenseViewSet(viewsets.ModelViewSet):
     queryset = Expense.objects.all().order_by('-created_at')
     serializer_class = ExpenseSerializer
+    pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['category', 'description']
+
+# Vistas para los nuevos módulos
+class SupplierViewSet(viewsets.ModelViewSet):
+    queryset = Supplier.objects.all().order_by('-created_at')
+    serializer_class = SupplierSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'ruc', 'email', 'phone']
+
+class InventoryMovementViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = InventoryMovement.objects.all().order_by('-date', '-created_at')
+    serializer_class = InventoryMovementSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['product__name', 'reason']
+
+class InventoryAdjustmentView(views.APIView):
+    def post(self, request):
+        serializer = InventoryAdjustmentSerializer(data=request.data)
+        if serializer.is_valid():
+            movement = serializer.save()
+            return Response(InventoryMovementSerializer(movement).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class PurchaseViewSet(viewsets.ModelViewSet):
+    queryset = Purchase.objects.all().order_by('-date', '-created_at')
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['supplier__name', 'invoice_number']
+
+    def get_serializer_class(self):
+        if self.action == 'create' or self.action == 'update' or self.action == 'partial_update':
+            return CreatePurchaseSerializer
+        return PurchaseSerializer
+    
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        purchase = serializer.save()
+        
+        # Retornar la compra con el serializer de lectura
+        response_serializer = PurchaseSerializer(purchase)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+class InventoryProductViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = InventoryProduct.objects.all().order_by('-updated_at')
+    serializer_class = InventoryProductSerializer
+    pagination_class = StandardResultsSetPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['product__name', 'product__code', 'location']
 
 @api_view(['GET'])
 def dashboard_stats(request):
