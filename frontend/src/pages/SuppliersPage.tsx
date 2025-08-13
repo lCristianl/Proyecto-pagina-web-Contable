@@ -8,10 +8,12 @@ import { SuppliersTable } from "@/components/suppliers/suppliers-table"
 import { SupplierDialog } from "@/components/suppliers/supplier-dialog"
 import { apiService, type Supplier } from "@/services/api"
 import { useToast } from "@/hooks/use-toast"
+import { ClipLoader } from "react-spinners"
 
 export function SuppliersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [loading, setLoading] = useState(true)
+  const [initialLoading, setInitialLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -37,7 +39,7 @@ export function SuppliersPage() {
         {
           id: 1,
           name: "Distribuidora Tech S.A.",
-          ruc_cedula: "1234567890",
+          ruc: "1234567890",
           address: "Av. Industrial 456",
           email: "ventas@distribuidoratech.com",
           phone: "+593 99 987 6543",
@@ -47,7 +49,7 @@ export function SuppliersPage() {
         {
           id: 2,
           name: "Suministros Oficina Ltda.",
-          ruc_cedula: "0987654321",
+          ruc: "1234567890",
           address: "Calle Comercial 789",
           email: "info@suministrosoficina.com",
           phone: "+593 98 123 4567",
@@ -57,6 +59,7 @@ export function SuppliersPage() {
       ])
     } finally {
       setLoading(false)
+      setInitialLoading(false)
     }
   }
 
@@ -122,6 +125,27 @@ export function SuppliersPage() {
     }
   }
 
+  if (initialLoading) {
+    return (
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <div className="flex items-center gap-2">
+            <Truck className="h-5 w-5" />
+            <h1 className="text-lg font-semibold">Proveedores</h1>
+          </div>
+        </header>
+        <div className="flex flex-col items-center justify-center h-screen">
+          <ClipLoader color="#1400ff" size={80} />
+          <h2 className="mt-4 text-2xl font-semibold text-gray-700">
+            Cargando...
+          </h2>
+        </div>
+      </SidebarInset>
+    )
+  }
+
   return (
     <SidebarInset>
       <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
@@ -145,7 +169,7 @@ export function SuppliersPage() {
               />
             </div>
           </div>
-          <Button onClick={handleCreateSupplier}>
+          <Button onClick={handleCreateSupplier} className="bg-blue-500 text-white hover:bg-blue-700 cursor-pointer">
             <Plus className="mr-2 h-4 w-4" />
             Nuevo Proveedor
           </Button>

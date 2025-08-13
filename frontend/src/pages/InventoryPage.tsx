@@ -9,6 +9,7 @@ import { InventoryMovements } from "@/components/inventory/inventory-movements"
 import { InventoryAdjustmentDialog } from "@/components/inventory/inventory-adjustment-dialog"
 import { apiService, type InventoryItem, type InventoryMovement } from "@/services/api"
 import { useToast } from "@/hooks/use-toast"
+import { ClipLoader } from "react-spinners"
 
 export function InventoryPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([])
@@ -20,6 +21,7 @@ export function InventoryPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null)
+  const [initialLoading, setInitialLoading] = useState(true)
   const { toast } = useToast()
 
   const fetchInventory = async () => {
@@ -74,6 +76,7 @@ export function InventoryPage() {
       ])
     } finally {
       setLoading(false)
+      setInitialLoading(false)
     }
   }
 
@@ -153,6 +156,25 @@ export function InventoryPage() {
         variant: "destructive",
       })
     }
+  }
+
+  if (initialLoading) {
+    return (
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <div className="flex items-center gap-2">
+            <Warehouse className="h-5 w-5" />
+            <h1 className="text-lg font-semibold">Inventario</h1>
+          </div>
+        </header>
+        <div className="flex flex-col items-center justify-center h-screen">
+          <ClipLoader color="#1400ff" size={80} />
+          <h2 className="mt-4 text-2xl font-semibold text-gray-700">Cargando...</h2>
+        </div>
+      </SidebarInset>
+    )
   }
 
   return (
