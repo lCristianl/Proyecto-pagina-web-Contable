@@ -33,7 +33,8 @@ export function ClientsTable({
           <TableHeader>
             <TableRow>
               <TableHead>Nombre</TableHead>
-              <TableHead>RUC/Cédula</TableHead>
+              <TableHead>Cédula</TableHead>
+              <TableHead>RUC</TableHead>
               <TableHead>Contacto</TableHead>
               <TableHead>Dirección</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
