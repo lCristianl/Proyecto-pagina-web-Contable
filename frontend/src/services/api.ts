@@ -174,6 +174,27 @@ class ApiService {
     return this.delete(`/clients/${id}/`)
   }
 
+  // Proveedores
+  async getSuppliers(page = 1, search = "") {
+    return this.get<PaginatedResponse<Supplier>>(`/suppliers/?page=${page}&search=${search}`)
+  }
+
+  async getSupplier(id: number) {
+    return this.get<Supplier>(`/suppliers/${id}/`)
+  }
+
+  async createSupplier(data: Partial<Supplier>) {
+    return this.post<Supplier>("/suppliers/", data)
+  }
+
+  async updateSupplier(id: number, data: Partial<Supplier>) {
+    return this.put<Supplier>(`/suppliers/${id}/`, data)
+  }
+
+  async deleteSupplier(id: number) {
+    return this.delete(`/suppliers/${id}/`)
+  }
+
   // Productos/Servicios
   async getProducts(page = 1, search = "") {
     return this.get<PaginatedResponse<Product>>(`/products/?page=${page}&search=${search}`)
@@ -193,6 +214,50 @@ class ApiService {
 
   async deleteProduct(id: number) {
     return this.delete(`/products/${id}/`)
+  }
+
+  // Inventario
+  async getInventory(page = 1, search = "") {
+    return this.get<PaginatedResponse<InventoryItem>>(`/inventory/?page=${page}&search=${search}`)
+  }
+
+  async getInventoryItem(id: number) {
+    return this.get<InventoryItem>(`/inventory/${id}/`)
+  }
+
+  async updateInventory(id: number, data: Partial<InventoryItem>) {
+    return this.put<InventoryItem>(`/inventory/${id}/`, data)
+  }
+
+  async adjustInventory(data: InventoryAdjustment) {
+    return this.post<InventoryMovement>("/inventory/adjust/", data)
+  }
+
+  async getInventoryMovements(page = 1, productId?: number) {
+    const params = new URLSearchParams({ page: page.toString() })
+    if (productId) params.append("product", productId.toString())
+    return this.get<PaginatedResponse<InventoryMovement>>(`/inventory/movements/?${params}`)
+  }
+
+  // Compras
+  async getPurchases(page = 1, search = "") {
+    return this.get<PaginatedResponse<Purchase>>(`/purchases/?page=${page}&search=${search}`)
+  }
+
+  async getPurchase(id: number) {
+    return this.get<Purchase>(`/purchases/${id}/`)
+  }
+
+  async createPurchase(data: Partial<Purchase>) {
+    return this.post<Purchase>("/purchases/", data)
+  }
+
+  async updatePurchase(id: number, data: Partial<Purchase>) {
+    return this.put<Purchase>(`/purchases/${id}/`, data)
+  }
+
+  async deletePurchase(id: number) {
+    return this.delete(`/purchases/${id}/`)
   }
 
   // Facturas
@@ -251,6 +316,17 @@ export interface Client {
   updated_at: string
 }
 
+export interface Supplier {
+  id: number
+  name: string
+  ruc_cedula: string
+  address: string
+  email: string
+  phone: string
+  created_at: string
+  updated_at: string
+}
+
 export interface Product {
   id: number
   name: string
@@ -260,6 +336,57 @@ export interface Product {
   description?: string
   created_at: string
   updated_at: string
+}
+
+export interface InventoryItem {
+  id: number
+  product: Product
+  current_stock: number
+  minimum_stock: number
+  location: string
+  last_updated: string
+}
+
+export interface InventoryMovement {
+  id: number
+  product: Product
+  movement_type: "purchase" | "sale" | "adjustment"
+  quantity: number
+  previous_stock: number
+  new_stock: number
+  reason?: string
+  date: string
+  reference_id?: number
+  created_at: string
+}
+
+export interface InventoryAdjustment {
+  product_id: number
+  quantity: number
+  reason: string
+}
+
+export interface Purchase {
+  id: number
+  supplier: Supplier
+  purchase_number: string
+  date: string
+  payment_method: string
+  status: "pending" | "completed" | "cancelled"
+  subtotal: number
+  tax: number
+  total: number
+  items: PurchaseItem[]
+  created_at: string
+  updated_at: string
+}
+
+export interface PurchaseItem {
+  id: number
+  product: Product
+  quantity: number
+  unit_price: number
+  total: number
 }
 
 export interface Invoice {
