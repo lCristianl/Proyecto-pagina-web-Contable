@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Plus, Search, ShoppingCart } from "lucide-react"
 import { PurchasesTable } from "@/components/purchases/purchases-table"
 import { PurchaseDialog } from "@/components/purchases/purchase-dialog"
-import { apiService, type Purchase } from "@/services/api"
+import { apiService, type Purchase, type CreatePurchaseData } from "@/services/api"
 import { useToast } from "@/hooks/use-toast"
 import { ClipLoader } from "react-spinners"
 
@@ -33,6 +33,7 @@ export function PurchasesPage() {
         title: "Error",
         description: "No se pudieron cargar las compras",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
       // Datos de ejemplo
       setPurchases([
@@ -40,25 +41,39 @@ export function PurchasesPage() {
           id: 1,
           supplier: {
             id: 1,
-            name: "Distribuidora Tech S.A.",
-            ruc: "1234567890",
-            address: "Av. Industrial 456",
-            email: "ventas@distribuidoratech.com",
-            phone: "+593 99 987 6543",
+            name: "Proveedor 1",
+            ruc: "12345678901",
+            address: "Calle Falsa 123",
+            email: "contacto@proveedor1.com",
+            phone: "123456789",
             created_at: "2024-01-01T00:00:00Z",
-            updated_at: "2024-01-01T00:00:00Z",
+            updated_at: "2024-01-01T00:00:00Z"
           },
-          purchase_number: "COMP-001",
-          date: "2024-01-15",
-          payment_method: "Transferencia",
-          status: "completed",
-          subtotal: 1000.0,
-          tax: 120.0,
-          total: 1120.0,
-          items: [],
-          created_at: "2024-01-15T00:00:00Z",
-          updated_at: "2024-01-15T00:00:00Z",
-        },
+          invoice_number: "128437",
+          date: "2024-01-01",
+          payment_method: "tarjeta",
+          subtotal: 100,
+          tax: 15,
+          total: 115,
+          items: [{
+              id: 1,
+              product: {
+                  id: 1,
+                  name: "Producto 1",
+                  description: "Descripción del producto 1",
+                  price: 100,
+                  type: "product",
+                  code: "P001",
+                  created_at: "2024-01-01T00:00:00Z",
+                  updated_at: "2024-01-01T00:00:00Z"
+              },
+              quantity: 10,
+              unit_price: 100,
+              total: 1000
+          }],
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z"
+        }
       ])
     } finally {
       setLoading(false)
@@ -91,6 +106,7 @@ export function PurchasesPage() {
       toast({
         title: "Éxito",
         description: "Compra eliminada correctamente",
+        className: "bg-green-700 text-white",
       })
       fetchPurchases()
     } catch (error) {
@@ -98,32 +114,39 @@ export function PurchasesPage() {
         title: "Error",
         description: "No se pudo eliminar la compra",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
     }
   }
 
-  const handleSavePurchase = async (data: Partial<Purchase>) => {
+  const handleSavePurchase = async (data: Partial<Purchase> | CreatePurchaseData) => {
     try {
       if (editingPurchase) {
-        await apiService.updatePurchase(editingPurchase.id, data)
+        // Para actualizaciones, siempre usamos el formato CreatePurchaseData
+        const updateData = data as CreatePurchaseData;
+        await apiService.updatePurchase(editingPurchase.id, updateData)
         toast({
           title: "Éxito",
           description: "Compra actualizada correctamente",
+          className: "bg-green-700 text-white",
         })
       } else {
-        await apiService.createPurchase(data)
+        await apiService.createPurchase(data as CreatePurchaseData)
         toast({
           title: "Éxito",
           description: "Compra creada correctamente",
+          className: "bg-green-700 text-white",
         })
       }
       setIsDialogOpen(false)
       fetchPurchases()
     } catch (error) {
+      console.error("Error al guardar la compra:", error)
       toast({
         title: "Error",
         description: "No se pudo guardar la compra",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
     }
   }

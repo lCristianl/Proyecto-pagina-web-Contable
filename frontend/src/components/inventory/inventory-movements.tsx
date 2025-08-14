@@ -115,7 +115,7 @@ export function InventoryMovements({ movements, loading }: InventoryMovementsPro
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
-                      {movement.quantity > 0 ? (
+                      {movement.new_stock > movement.previous_stock ? (
                         <ArrowUp className="h-4 w-4 text-green-500" />
                       ) : (
                         <ArrowDown className="h-4 w-4 text-red-500" />

@@ -97,12 +97,18 @@ export function PurchasesTable({
             ) : (
               purchases.map((purchase) => (
                 <TableRow key={purchase.id}>
-                  <TableCell className="font-medium">{purchase.purchase_number}</TableCell>
+                  <TableCell>{purchase.invoice_number || "N/A"}</TableCell>
                   <TableCell>{purchase.supplier.name}</TableCell>
                   <TableCell>{new Date(purchase.date).toLocaleDateString()}</TableCell>
-                  <TableCell>{getStatusBadge(purchase.status)}</TableCell>
+                  <TableCell>{getStatusBadge("pending")}</TableCell>
                   <TableCell>{purchase.payment_method}</TableCell>
-                  <TableCell className="font-medium">${purchase.total.toFixed(2)}</TableCell>
+                  <TableCell className="font-medium">
+                    ${typeof purchase.total === 'number' 
+                      ? purchase.total.toFixed(2) 
+                      : (purchase.total !== undefined && purchase.total !== null)
+                        ? parseFloat(String(purchase.total)).toFixed(2)
+                        : '0.00'}
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" size="sm">
@@ -111,14 +117,14 @@ export function PurchasesTable({
                       <Button variant="outline" size="sm">
                         <Download className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => onEdit(purchase)}>
+                      <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 cursor-pointer" onClick={() => onEdit(purchase)}>
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => onDelete(purchase.id)}
-                        className="text-destructive hover:text-destructive"
+                        className="text-destructive hover:text-destructive bg-red-500 hover:bg-red-600 cursor-pointer"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

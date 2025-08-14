@@ -36,42 +36,22 @@ export function InventoryPage() {
         title: "Error",
         description: "No se pudo cargar el inventario",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
       // Datos de ejemplo
       setInventory([
         {
           id: 1,
-          product: {
-            id: 1,
-            name: "Laptop Dell Inspiron",
-            price: 899.99,
-            type: "product",
-            code: "DELL-001",
-            description: "Laptop para oficina",
-            created_at: "2024-01-01T00:00:00Z",
-            updated_at: "2024-01-01T00:00:00Z",
-          },
+          product_id: 1,
+          name: "Laptop Dell Inspiron",
+          code: "DELL-001",
           current_stock: 15,
           minimum_stock: 5,
           location: "Almacén A - Estante 1",
-          last_updated: "2024-01-15T10:30:00Z",
-        },
-        {
-          id: 2,
-          product: {
-            id: 2,
-            name: "Mouse Inalámbrico",
-            price: 25.99,
-            type: "product",
-            code: "MOUSE-001",
-            description: "Mouse inalámbrico ergonómico",
-            created_at: "2024-01-01T00:00:00Z",
-            updated_at: "2024-01-01T00:00:00Z",
-          },
-          current_stock: 3,
-          minimum_stock: 10,
-          location: "Almacén A - Estante 2",
-          last_updated: "2024-01-14T15:45:00Z",
+          last_movement_date: "2024-01-15T10:30:00Z",
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
+          product: 1,
         },
       ])
     } finally {
@@ -137,14 +117,20 @@ export function InventoryPage() {
     if (!selectedProduct) return
 
     try {
+      const today = new Date().toISOString().split('T')[0];
+      const quantity = data.quantity;
+      
       await apiService.adjustInventory({
-        product_id: selectedProduct.product.id,
-        quantity: data.quantity,
+        product_id: selectedProduct.product_id,
+        quantity: Math.abs(quantity),
+        type: quantity >= 0 ? 'increase' : 'decrease',
         reason: data.reason,
+        date: today,
       })
       toast({
         title: "Éxito",
         description: "Ajuste de inventario realizado correctamente",
+        className: "bg-green-700 text-white",
       })
       setIsAdjustmentDialogOpen(false)
       fetchInventory()
@@ -154,6 +140,7 @@ export function InventoryPage() {
         title: "Error",
         description: "No se pudo realizar el ajuste de inventario",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
     }
   }

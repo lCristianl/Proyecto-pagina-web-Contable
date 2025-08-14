@@ -51,7 +51,9 @@ export function InventoryAdjustmentDialog({ open, onOpenChange, product, onSave 
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const newStock = product ? product.current_stock + Number.parseInt(formData.quantity || "0") : 0
+  const newStock = product 
+    ? parseFloat(product.current_stock.toString()) + Number.parseInt(formData.quantity || "0") 
+    : 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -64,8 +66,8 @@ export function InventoryAdjustmentDialog({ open, onOpenChange, product, onSave 
         {product && (
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">{product.product.name}</CardTitle>
-              <CardDescription>Código: {product.product.code}</CardDescription>
+              <CardTitle className="text-base">{product.name}</CardTitle>
+              <CardDescription>Código: {product.code}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4 text-sm">
@@ -111,10 +113,12 @@ export function InventoryAdjustmentDialog({ open, onOpenChange, product, onSave 
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button type="button" className="bg-red-500 text-white hover:bg-red-700 cursor-pointer" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit">Realizar Ajuste</Button>
+            <Button type="submit" className="bg-blue-500 text-white hover:bg-blue-700 cursor-pointer">
+              Realizar Ajuste
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
