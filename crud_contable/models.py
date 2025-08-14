@@ -56,6 +56,8 @@ class InventoryMovement(models.Model):
     MOVEMENT_TYPES = [
         ('increase', 'Incremento'),
         ('decrease', 'Decremento'),
+        ('purchase', 'Compra'),
+        ('sale', 'Venta'),
     ]
     
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='movements')
