@@ -107,6 +107,13 @@ class ApiService {
           responseData: data,
         })
         
+        if (data && (data.message || data.detail || data.error)) {
+          console.error('Backend Error Message:', data.message || data.detail || data.error);
+          if (data.errors) {
+            console.error('Field errors:', data.errors);
+          }
+        }
+        
         throw new Error(data.message || data.detail || `HTTP error! status: ${response.status}`)
       }
 
@@ -126,8 +133,7 @@ class ApiService {
     return this.request<T>(endpoint, { method: "GET" })
   }
 
-  async post<T>(endpoint: string, data: any): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
+  async post<T>(endpoint: string, data: any): Promise<ApiResponse<T>> {    return this.request<T>(endpoint, {
       method: "POST",
       body: JSON.stringify(data),
     })
@@ -230,13 +236,13 @@ class ApiService {
   }
 
   async adjustInventory(data: InventoryAdjustment) {
-    return this.post<InventoryMovement>("/inventory/adjust/", data)
+    return this.post<InventoryMovement>("/inventory/adjustments/", data)
   }
 
   async getInventoryMovements(page = 1, productId?: number) {
     const params = new URLSearchParams({ page: page.toString() })
     if (productId) params.append("product", productId.toString())
-    return this.get<PaginatedResponse<InventoryMovement>>(`/inventory/movements/?${params}`)
+    return this.get<PaginatedResponse<InventoryMovement>>(`/inventory-movements/?${params}`)
   }
 
   // Compras
@@ -248,11 +254,11 @@ class ApiService {
     return this.get<Purchase>(`/purchases/${id}/`)
   }
 
-  async createPurchase(data: Partial<Purchase>) {
+  async createPurchase(data: CreatePurchaseData) {
     return this.post<Purchase>("/purchases/", data)
   }
 
-  async updatePurchase(id: number, data: Partial<Purchase>) {
+  async updatePurchase(id: number, data: CreatePurchaseData) {
     return this.put<Purchase>(`/purchases/${id}/`, data)
   }
 
@@ -336,15 +342,24 @@ export interface Product {
   description?: string
   created_at: string
   updated_at: string
+  // Campos adicionales para el inventario (solo se usan al crear)
+  current_stock?: number
+  minimum_stock?: number
+  location?: string
 }
 
 export interface InventoryItem {
   id: number
-  product: Product
-  current_stock: number
-  minimum_stock: number
+  product_id: number
+  name: string
+  code: string
+  current_stock: number | string
+  minimum_stock: number | string
   location: string
-  last_updated: string
+  last_movement_date: string
+  created_at: string
+  updated_at: string
+  product: number
 }
 
 export interface InventoryMovement {
@@ -363,19 +378,21 @@ export interface InventoryMovement {
 export interface InventoryAdjustment {
   product_id: number
   quantity: number
+  type: 'increase' | 'decrease'
   reason: string
+  date: string
 }
 
 export interface Purchase {
   id: number
   supplier: Supplier
-  purchase_number: string
+  invoice_number: string
   date: string
   payment_method: string
-  status: "pending" | "completed" | "cancelled"
   subtotal: number
   tax: number
   total: number
+  notes?: string
   items: PurchaseItem[]
   created_at: string
   updated_at: string
@@ -438,6 +455,24 @@ export interface CreateInvoiceData {
     unit_price: number
     total: number
   }[]
+}
+
+// Agregar tipo específico para crear compras
+export interface CreatePurchaseData {
+  supplier_id: number
+  invoice_number?: string
+  date: string
+  payment_method: string
+  subtotal: number
+  tax: number
+  total: number
+  notes?: string
+  items: Array<{
+    product_id: number
+    quantity: number
+    unit_price: number
+    total: number
+  }>
 }
 
 export const apiService = new ApiService(API_BASE_URL)
