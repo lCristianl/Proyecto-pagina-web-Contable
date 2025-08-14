@@ -13,7 +13,7 @@ router.register(r'invoices', InvoiceViewSet)
 router.register(r'expenses', ExpenseViewSet)
 router.register(r'suppliers', SupplierViewSet)
 router.register(r'inventory', InventoryProductViewSet)
-router.register(r'inventory/movements', InventoryMovementViewSet)
+router.register(r'inventory-movements', InventoryMovementViewSet)
 router.register(r'purchases', PurchaseViewSet)
 
 urlpatterns = [
