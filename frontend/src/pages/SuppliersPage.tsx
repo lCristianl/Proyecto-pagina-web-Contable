@@ -33,6 +33,7 @@ export function SuppliersPage() {
         title: "Error",
         description: "No se pudieron cargar los proveedores",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
       // Datos de ejemplo para demostración
       setSuppliers([
@@ -88,6 +89,7 @@ export function SuppliersPage() {
       toast({
         title: "Éxito",
         description: "Proveedor eliminado correctamente",
+        className: "bg-green-700 text-white",
       })
       fetchSuppliers()
     } catch (error) {
@@ -95,6 +97,7 @@ export function SuppliersPage() {
         title: "Error",
         description: "No se pudo eliminar el proveedor",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
     }
   }
@@ -106,12 +109,14 @@ export function SuppliersPage() {
         toast({
           title: "Éxito",
           description: "Proveedor actualizado correctamente",
+          className: "bg-green-700 text-white",
         })
       } else {
         await apiService.createSupplier(data)
         toast({
           title: "Éxito",
           description: "Proveedor creado correctamente",
+          className: "bg-green-700 text-white",
         })
       }
       setIsDialogOpen(false)
@@ -121,6 +126,7 @@ export function SuppliersPage() {
         title: "Error",
         description: "No se pudo guardar el proveedor",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
     }
   }

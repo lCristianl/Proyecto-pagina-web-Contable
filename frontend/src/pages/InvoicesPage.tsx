@@ -33,6 +33,7 @@ export function InvoicesPage() {
         title: "Error",
         description: "No se pudieron cargar las facturas",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
       // Datos de ejemplo
       setInvoices([
@@ -100,6 +101,7 @@ export function InvoicesPage() {
       toast({
         title: "Éxito",
         description: "Factura eliminada correctamente",
+        className: "bg-green-700 text-white",
       })
       // Refrescar la lista inmediatamente
       fetchInvoices()
@@ -109,6 +111,7 @@ export function InvoicesPage() {
         title: "Error",
         description: "No se pudo eliminar la factura",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
     }
   }
@@ -125,6 +128,7 @@ export function InvoicesPage() {
         toast({
           title: "Éxito",
           description: "Factura actualizada correctamente",
+          className: "bg-green-700 text-white",
         })
       } else {
         // Para crear, usar datos tal como vienen
@@ -132,6 +136,7 @@ export function InvoicesPage() {
         toast({
           title: "Éxito",
           description: "Factura creada correctamente",
+          className: "bg-green-700 text-white",
         })
       }
       setIsDialogOpen(false)
@@ -142,6 +147,7 @@ export function InvoicesPage() {
         title: "Error",
         description: "No se pudo guardar la factura",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
     }
   }

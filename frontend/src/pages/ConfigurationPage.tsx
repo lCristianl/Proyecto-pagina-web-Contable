@@ -62,6 +62,7 @@ export function ConfigurationPage() {
     toast({
       title: "Éxito",
       description: "Información de la empresa actualizada correctamente",
+      className: "bg-green-700 text-white",
     })
   }
 
@@ -69,6 +70,7 @@ export function ConfigurationPage() {
     toast({
       title: "Éxito",
       description: "Configuración de facturación actualizada correctamente",
+      className: "bg-green-700 text-white",
     })
   }
 
@@ -76,6 +78,7 @@ export function ConfigurationPage() {
     toast({
       title: "Éxito",
       description: "Configuración de notificaciones actualizada correctamente",
+      className: "bg-green-700 text-white",
     })
   }
 
@@ -83,6 +86,7 @@ export function ConfigurationPage() {
     toast({
       title: "Éxito",
       description: "Configuración de seguridad actualizada correctamente",
+      className: "bg-green-700 text-white",
     })
   }
 

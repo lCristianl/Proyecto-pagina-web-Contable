@@ -33,6 +33,7 @@ export function ProductsPage() {
         title: "Error",
         description: "No se pudieron cargar los productos",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
       // Datos de ejemplo
       setProducts([
@@ -88,6 +89,7 @@ export function ProductsPage() {
       toast({
         title: "Éxito",
         description: "Producto eliminado correctamente",
+        className: "bg-green-700 text-white",
       })
       fetchProducts()
     } catch (error) {
@@ -95,6 +97,7 @@ export function ProductsPage() {
         title: "Error",
         description: "No se pudo eliminar el producto",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
     }
   }
@@ -106,12 +109,14 @@ export function ProductsPage() {
         toast({
           title: "Éxito",
           description: "Producto actualizado correctamente",
+          className: "bg-green-700 text-white",
         })
       } else {
         await apiService.createProduct(data)
         toast({
           title: "Éxito",
           description: "Producto creado correctamente",
+          className: "bg-green-700 text-white",
         })
       }
       setIsDialogOpen(false)
@@ -121,6 +126,7 @@ export function ProductsPage() {
         title: "Error",
         description: "No se pudo guardar el producto",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
     }
   }

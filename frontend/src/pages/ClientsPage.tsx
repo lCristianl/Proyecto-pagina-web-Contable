@@ -33,6 +33,7 @@ export function ClientsPage() {
         title: "Error",
         description: "No se pudieron cargar los clientes",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
     } finally {
       setLoading(false)
@@ -65,6 +66,7 @@ export function ClientsPage() {
       toast({
         title: "Éxito",
         description: "Cliente eliminado correctamente",
+        className: "bg-green-700 text-white",
       })
       fetchClients()
     } catch (error) {
@@ -72,6 +74,7 @@ export function ClientsPage() {
         title: "Error",
         description: "No se pudo eliminar el cliente",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
     }
   }
@@ -83,12 +86,14 @@ export function ClientsPage() {
         toast({
           title: "Éxito",
           description: "Cliente actualizado correctamente",
+          className: "bg-green-700 text-white",
         })
       } else {
         await apiService.createClient(data)
         toast({
           title: "Éxito",
           description: "Cliente creado correctamente",
+          className: "bg-green-700 text-white",
         })
       }
       setIsDialogOpen(false)

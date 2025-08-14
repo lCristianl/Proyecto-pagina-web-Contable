@@ -34,6 +34,7 @@ export function ExpensesPage() {
         title: "Error",
         description: "No se pudieron cargar los gastos",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
       // Datos de ejemplo
       setExpenses([
@@ -87,6 +88,7 @@ export function ExpensesPage() {
       toast({
         title: "Éxito",
         description: "Gasto eliminado correctamente",
+        className: "bg-green-700 text-white",
       })
       fetchExpenses()
     } catch (error) {
@@ -94,6 +96,7 @@ export function ExpensesPage() {
         title: "Error",
         description: "No se pudo eliminar el gasto",
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
     }
   }
@@ -105,12 +108,14 @@ export function ExpensesPage() {
         toast({
           title: "Éxito",
           description: "Gasto actualizado correctamente",
+          className: "bg-green-700 text-white",
         })
       } else {
         await apiService.createExpense(data)
         toast({
           title: "Éxito",
           description: "Gasto creado correctamente",
+          className: "bg-green-700 text-white",
         })
       }
       setIsDialogOpen(false)
