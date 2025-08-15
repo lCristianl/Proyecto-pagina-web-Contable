@@ -3,7 +3,7 @@ from django.urls import path, include
 from .views import (
     ClientViewSet, ProductViewSet, InvoiceViewSet, ExpenseViewSet, dashboard_stats,
     SupplierViewSet, InventoryProductViewSet, InventoryMovementViewSet, 
-    InventoryAdjustmentView, PurchaseViewSet
+    InventoryAdjustmentView, PurchaseViewSet, ProductLocationView
 )
 
 router = DefaultRouter()
@@ -19,6 +19,7 @@ router.register(r'purchases', PurchaseViewSet)
 urlpatterns = [
     path('dashboard/stats/', dashboard_stats, name='dashboard-stats'),
     path('inventory/adjustments/', InventoryAdjustmentView.as_view(), name='inventory-adjustments'),
+    path('inventory/location/', ProductLocationView.as_view(), name='product-location-update'),
 ]
 
 urlpatterns += router.urls
