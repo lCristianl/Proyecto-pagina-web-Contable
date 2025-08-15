@@ -235,6 +235,10 @@ class ApiService {
     return this.put<InventoryItem>(`/inventory/${id}/`, data)
   }
 
+  async updateProductLocation(data: UpdateProductLocationData) {
+    return this.post<InventoryItem>("/inventory/location/", data)
+  }
+
   async adjustInventory(data: InventoryAdjustment) {
     return this.post<InventoryMovement>("/inventory/adjustments/", data)
   }
@@ -340,6 +344,7 @@ export interface Product {
   type: "product" | "service"
   code: string
   description?: string
+  unit_weight?: number
   created_at: string
   updated_at: string
   // Campos adicionales para el inventario (solo se usan al crear)
@@ -381,6 +386,11 @@ export interface InventoryAdjustment {
   type: 'increase' | 'decrease'
   reason: string
   date: string
+}
+
+export interface UpdateProductLocationData {
+  product_id: number
+  location: string
 }
 
 export interface Purchase {
