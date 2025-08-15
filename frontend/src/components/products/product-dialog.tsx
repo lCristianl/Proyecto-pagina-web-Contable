@@ -32,6 +32,7 @@ export function ProductDialog({ open, onOpenChange, product, onSave }: ProductDi
     current_stock: 0,
     minimum_stock: 0,
     location: "",
+    unit_weight: "",
   })
   
   const [activeTab, setActiveTab] = useState("general")
@@ -44,9 +45,10 @@ export function ProductDialog({ open, onOpenChange, product, onSave }: ProductDi
         price: product.price.toString(),
         type: product.type,
         description: product.description || "",
-        current_stock: 0, // Valores por defecto, estos no son editables al actualizar
+        current_stock: 0, // Valores por defecto
         minimum_stock: 0, 
         location: "",
+        unit_weight: product.unit_weight?.toString() || "",
       })
     } else {
       setFormData({
@@ -58,6 +60,7 @@ export function ProductDialog({ open, onOpenChange, product, onSave }: ProductDi
         current_stock: 0,
         minimum_stock: 0,
         location: "",
+        unit_weight: "",
       })
     }
   }, [product, open])
@@ -66,15 +69,23 @@ export function ProductDialog({ open, onOpenChange, product, onSave }: ProductDi
     e.preventDefault()
     
     // Si es servicio, no enviamos datos de inventario
-    const dataToSave = {
-      ...formData,
+    const dataToSave: Partial<Product> = {
+      name: formData.name,
+      code: formData.code,
+      type: formData.type,
+      description: formData.description,
       price: Number.parseFloat(formData.price),
+    }
+    
+    // Convertir el peso unitario a número si está definido
+    if (formData.unit_weight) {
+      dataToSave.unit_weight = Number.parseFloat(formData.unit_weight)
     }
     
     // Solo añadir campos de inventario si es un producto y es creación (no edición)
     if (formData.type === "product" && !product) {
-      dataToSave.current_stock = formData.current_stock
-      dataToSave.minimum_stock = formData.minimum_stock
+      dataToSave.current_stock = Number(formData.current_stock)
+      dataToSave.minimum_stock = Number(formData.minimum_stock)
       // Solo incluimos location si tiene algún valor
       if (formData.location) {
         dataToSave.location = formData.location
@@ -169,6 +180,20 @@ export function ProductDialog({ open, onOpenChange, product, onSave }: ProductDi
                     required
                   />
                 </div>
+                {formData.type === "product" && (
+                  <div className="grid gap-2">
+                    <Label htmlFor="unit_weight">Peso por Unidad (kg)</Label>
+                    <Input
+                      id="unit_weight"
+                      type="number"
+                      step="0.001"
+                      min="0"
+                      value={formData.unit_weight}
+                      onChange={(e) => handleChange("unit_weight", e.target.value)}
+                      placeholder="0.000"
+                    />
+                  </div>
+                )}
                 <div className="grid gap-2">
                   <Label htmlFor="description">Descripción</Label>
                   <Textarea
