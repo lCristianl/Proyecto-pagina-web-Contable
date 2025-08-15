@@ -113,32 +113,53 @@ export function InventoryPage() {
     setIsAdjustmentDialogOpen(true)
   }
 
-  const handleSaveAdjustment = async (data: { quantity: number; reason: string }) => {
+  const handleSaveAdjustment = async (data: { quantity?: number; reason?: string; location?: string; isLocationUpdate: boolean }) => {
     if (!selectedProduct) return
 
     try {
-      const today = new Date().toISOString().split('T')[0];
-      const quantity = data.quantity;
+      if (data.isLocationUpdate) {
+        // Actualizar solo la ubicación
+        if (data.location) {
+          await apiService.updateProductLocation({
+            product_id: selectedProduct.product_id,
+            location: data.location
+          });
+          toast({
+            title: "Éxito",
+            description: "Ubicación actualizada correctamente",
+            className: "bg-green-700 text-white",
+          });
+        }
+      } else {
+        // Ajuste de cantidad
+        if (data.quantity !== undefined && data.reason) {
+          const today = new Date().toISOString().split('T')[0];
+          const quantity = data.quantity;
+          
+          await apiService.adjustInventory({
+            product_id: selectedProduct.product_id,
+            quantity: Math.abs(quantity),
+            type: quantity >= 0 ? 'increase' : 'decrease',
+            reason: data.reason,
+            date: today,
+          });
+          toast({
+            title: "Éxito",
+            description: "Ajuste de inventario realizado correctamente",
+            className: "bg-green-700 text-white",
+          });
+        }
+      }
       
-      await apiService.adjustInventory({
-        product_id: selectedProduct.product_id,
-        quantity: Math.abs(quantity),
-        type: quantity >= 0 ? 'increase' : 'decrease',
-        reason: data.reason,
-        date: today,
-      })
-      toast({
-        title: "Éxito",
-        description: "Ajuste de inventario realizado correctamente",
-        className: "bg-green-700 text-white",
-      })
       setIsAdjustmentDialogOpen(false)
       fetchInventory()
       fetchMovements()
     } catch (error) {
       toast({
         title: "Error",
-        description: "No se pudo realizar el ajuste de inventario",
+        description: data.isLocationUpdate 
+          ? "No se pudo actualizar la ubicación del producto" 
+          : "No se pudo realizar el ajuste de inventario",
         variant: "destructive",
         className: "bg-red-700 text-white",
       })
