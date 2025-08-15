@@ -100,6 +100,39 @@ class InventoryAdjustmentView(views.APIView):
             return Response(InventoryMovementSerializer(movement).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class ProductLocationView(views.APIView):
+    def post(self, request):
+        product_id = request.data.get('product_id')
+        location = request.data.get('location')
+        
+        if not product_id or location is None:
+            return Response({
+                "error": "Se requieren los campos product_id y location"
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            product = Product.objects.get(id=product_id)
+            inventory_product = InventoryProduct.objects.get(product=product)
+            
+            # Actualizar solo la ubicación
+            inventory_product.location = location
+            inventory_product.save(update_fields=['location', 'updated_at'])
+            
+            return Response(InventoryProductSerializer(inventory_product).data, status=status.HTTP_200_OK)
+        except Product.DoesNotExist:
+            return Response({"error": "Producto no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        except InventoryProduct.DoesNotExist:
+            # Crear un registro de inventario si no existe
+            inventory_product = InventoryProduct.objects.create(
+                product=product,
+                location=location,
+                current_stock=0,
+                minimum_stock=0
+            )
+            return Response(InventoryProductSerializer(inventory_product).data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class PurchaseViewSet(viewsets.ModelViewSet):
     queryset = Purchase.objects.all().order_by('-date', '-created_at')
     pagination_class = StandardResultsSetPagination
