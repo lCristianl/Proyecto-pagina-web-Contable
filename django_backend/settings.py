@@ -25,8 +25,13 @@ SECRET_KEY = 'django-insecure-nq@$)a4w0#*22)ji0)fib0e$t&ch)*i*etc^_22$@lg*^vt$j2
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'localhost:5173']
 
+# Trusted origins para CSRF
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+]
 
 # Application definition
 
@@ -134,7 +139,62 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
 ]
 
+# Permitir cookies en CORS
+CORS_ALLOW_CREDENTIALS = True
+
+# Para debugging: permitir todos los origins (solo en desarrollo)
+CORS_ALLOW_ALL_ORIGINS = True  # Activado para debugging
+
+# Permitir headers adicionales para CORS
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# Permitir todos los métodos
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Configuración de sesiones
+SESSION_COOKIE_AGE = 86400 * 7  # 7 días
+SESSION_COOKIE_SECURE = False  # True en producción con HTTPS
+SESSION_COOKIE_HTTPONLY = False  # Cambiar a False para debugging
+SESSION_COOKIE_SAMESITE = None  # Cambiar para CORS
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# Configuración de email
+# Para desarrollo - mostrar emails en consola
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Para producción con Gmail SMTP (descomentar cuando sea necesario):
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'tu-email@gmail.com'
+# EMAIL_HOST_PASSWORD = 'tu-app-password'  # App password de Gmail
+
+DEFAULT_FROM_EMAIL = 'Sistema Contable <noreply@sistemacontable.com>'
+FRONTEND_URL = 'http://localhost:5173'  # URL del frontend
+
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 10,
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
 }
