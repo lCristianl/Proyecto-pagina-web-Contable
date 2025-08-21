@@ -1,6 +1,34 @@
+from django.contrib.auth.models import User
 from django.db import models
+from django.utils import timezone
+import uuid
+
+# Modelo para códigos de recuperación de contraseña
+class PasswordResetCode(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6)  # ejemplo: "483920"
+    created_at = models.DateTimeField(default=timezone.now)
+    is_used = models.BooleanField(default=False)
+
+    def is_valid(self):
+        # válido solo 10 minutos
+        return not self.is_used and (timezone.now() - self.created_at).seconds < 600
+
+    def __str__(self):
+        return f"Código {self.code} para {self.user.username}"
+
+# Extender el modelo User por defecto con un perfil
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    # Campos adicionales si los necesitas en el futuro
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Perfil de {self.user.username}"
 
 # Create your models here.
+
 class Client(models.Model):
     name = models.CharField(max_length=255)
     cedula = models.CharField(max_length=20, unique=True)
