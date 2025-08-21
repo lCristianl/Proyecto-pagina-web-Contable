@@ -1,9 +1,11 @@
+import { useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Edit, Trash2, Eye, Download } from "lucide-react"
 import type { Invoice } from "@/services/api"
 import { Pagination } from "@/components/pagination"
+import { InvoiceDetailsDialog } from "./invoice-details-dialog"
 
 interface InvoicesTableProps {
   invoices: Invoice[]
@@ -24,6 +26,14 @@ export function InvoicesTable({
   totalPages,
   onPageChange,
 }: InvoicesTableProps) {
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
+
+  const handleViewDetails = (invoice: Invoice) => {
+    setSelectedInvoice(invoice)
+    setDetailsDialogOpen(true)
+  }
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "paid":
@@ -110,10 +120,15 @@ export function InvoicesTable({
                   <TableCell className="font-medium">${Number(invoice.total || 0).toFixed(2)}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="bg-blue-400 hover:bg-blue-500 cursor-pointer"
+                        onClick={() => handleViewDetails(invoice)}
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="bg-green-400 hover:bg-green-500 cursor-pointer">
                         <Download className="h-4 w-4" />
                       </Button>
                       <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 cursor-pointer" onClick={() => onEdit(invoice)}>
@@ -141,6 +156,12 @@ export function InvoicesTable({
           <Pagination currentPage={page} totalPages={totalPages} onPageChange={onPageChange} />
         </div>
       )}
+      
+      <InvoiceDetailsDialog 
+        open={detailsDialogOpen} 
+        onOpenChange={setDetailsDialogOpen} 
+        invoice={selectedInvoice} 
+      />
     </div>
   )
 }
