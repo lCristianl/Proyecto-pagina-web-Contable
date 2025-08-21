@@ -2,10 +2,23 @@ from django.shortcuts import render
 from rest_framework import viewsets, filters, status, views
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.decorators import api_view
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.http import JsonResponse
+from django.conf import settings
+import json
+import random
 from .models import (
     Client, Product, Invoice, Expense,
     Supplier, InventoryProduct, InventoryMovement,
-    Purchase
+    Purchase, UserProfile, PasswordResetCode
 )
 from .serializers import (
     ClientSerializer, ProductSerializer, 
@@ -190,3 +203,319 @@ def dashboard_stats(request):
         "pendingInvoices": pending_invoices,
     }
     return Response(data)
+
+# Vistas de autenticación
+@csrf_exempt
+def login_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            username = data.get('username')
+            password = data.get('password')
+            
+            if not username or not password:
+                return JsonResponse({
+                    'error': True,
+                    'message': 'Usuario y contraseña son requeridos',
+                    'errors': {
+                        'username': ['Este campo es requerido'] if not username else [],
+                        'password': ['Este campo es requerido'] if not password else []
+                    }
+                }, status=400)
+            
+            # Intentar autenticar con username o email
+            user = None
+            if '@' in username:
+                # Si contiene @, intentar buscar por email
+                try:
+                    user_obj = User.objects.get(email=username)
+                    user = authenticate(request, username=user_obj.username, password=password)
+                except User.DoesNotExist:
+                    pass
+            else:
+                # Si no, autenticar por username
+                user = authenticate(request, username=username, password=password)
+            
+            if user is not None and user.is_active:
+                login(request, user)
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Login exitoso',
+                    'user': {
+                        'id': user.id,
+                        'username': user.username,
+                        'email': user.email,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'is_staff': user.is_staff,
+                    }
+                })
+            else:
+                return JsonResponse({
+                    'error': True,
+                    'message': 'Credenciales inválidas',
+                    'errors': {
+                        'username': ['Usuario o contraseña incorrectos'],
+                        'password': ['Usuario o contraseña incorrectos']
+                    }
+                }, status=401)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'error': True,
+                'message': 'Datos JSON inválidos'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'error': True,
+                'message': f'Error interno del servidor: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def logout_view(request):
+    if request.method == 'POST':
+        try:
+            logout(request)
+            return JsonResponse({
+                'success': True,
+                'message': 'Logout exitoso'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'error': True,
+                'message': f'Error al cerrar sesión: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def check_auth_view(request):
+    if request.method == 'GET':
+        if request.user.is_authenticated:
+            return JsonResponse({
+                'authenticated': True,
+                'user': {
+                    'id': request.user.id,
+                    'username': request.user.username,
+                    'email': request.user.email,
+                    'first_name': request.user.first_name,
+                    'last_name': request.user.last_name,
+                    'is_staff': request.user.is_staff,
+                }
+            })
+        else:
+            return JsonResponse({
+                'authenticated': False
+            })
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+# Función auxiliar para enviar código de recuperación
+def send_reset_code(user):
+    """Envía un código de 6 dígitos al email del usuario"""
+    code = str(random.randint(100000, 999999))  # 6 dígitos
+    
+    # Invalidar códigos anteriores
+    PasswordResetCode.objects.filter(user=user, is_used=False).update(is_used=True)
+    
+    # Crear nuevo código
+    PasswordResetCode.objects.create(user=user, code=code)
+
+    # Enviar email
+    subject = 'Código de verificación - Sistema Contable'
+    message = f'''
+    Hola {user.first_name or user.username},
+    
+    Tu código de verificación para recuperar tu contraseña es:
+    
+    {code}
+    
+    Este código es válido por 10 minutos. Si no solicitaste este cambio, puedes ignorar este email.
+    
+    Saludos,
+    Equipo Sistema Contable
+    '''
+    
+    send_mail(
+        subject=subject,
+        message=message,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+@csrf_exempt
+def forgot_password_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            
+            if not email:
+                return JsonResponse({
+                    'error': True,
+                    'message': 'El email es requerido'
+                }, status=400)
+            
+            try:
+                user = User.objects.get(email=email)
+                
+                # Enviar código de verificación
+                try:
+                    send_reset_code(user)
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Se ha enviado un código de verificación a tu email'
+                    })
+                except Exception as mail_error:
+                    return JsonResponse({
+                        'error': True,
+                        'message': 'Error al enviar el email. Inténtalo más tarde.'
+                    }, status=500)
+                    
+            except User.DoesNotExist:
+                # No revelar que el email no existe por seguridad
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Si el email existe, recibirás un código de verificación'
+                })
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'error': True,
+                'message': 'Datos JSON inválidos'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'error': True,
+                'message': f'Error interno del servidor: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def verify_reset_code_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            code = data.get('code')
+            
+            if not email or not code:
+                return JsonResponse({
+                    'error': True,
+                    'message': 'Email y código son requeridos'
+                }, status=400)
+            
+            try:
+                user = User.objects.get(email=email)
+                reset_code = PasswordResetCode.objects.filter(
+                    user=user,
+                    code=code,
+                    is_used=False
+                ).first()
+                
+                if reset_code and reset_code.is_valid():
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Código verificado correctamente',
+                        'valid': True
+                    })
+                else:
+                    return JsonResponse({
+                        'error': True,
+                        'message': 'Código inválido o expirado',
+                        'valid': False
+                    }, status=400)
+                    
+            except User.DoesNotExist:
+                return JsonResponse({
+                    'error': True,
+                    'message': 'Usuario no encontrado',
+                    'valid': False
+                }, status=404)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'error': True,
+                'message': 'Datos JSON inválidos'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'error': True,
+                'message': f'Error interno del servidor: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def reset_password_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            code = data.get('code')
+            new_password = data.get('new_password')
+            
+            if not email or not code or not new_password:
+                return JsonResponse({
+                    'error': True,
+                    'message': 'Email, código y nueva contraseña son requeridos'
+                }, status=400)
+            
+            if len(new_password) < 6:
+                return JsonResponse({
+                    'error': True,
+                    'message': 'La contraseña debe tener al menos 6 caracteres'
+                }, status=400)
+            
+            try:
+                user = User.objects.get(email=email)
+                reset_code = PasswordResetCode.objects.filter(
+                    user=user,
+                    code=code,
+                    is_used=False
+                ).first()
+                
+                if reset_code and reset_code.is_valid():
+                    # Cambiar la contraseña
+                    user.set_password(new_password)
+                    user.save()
+                    
+                    # Marcar el código como usado
+                    reset_code.is_used = True
+                    reset_code.save()
+                    
+                    # Invalidar todos los otros códigos del usuario
+                    PasswordResetCode.objects.filter(user=user, is_used=False).update(is_used=True)
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'Contraseña cambiada correctamente'
+                    })
+                else:
+                    return JsonResponse({
+                        'error': True,
+                        'message': 'Código inválido o expirado'
+                    }, status=400)
+                    
+            except User.DoesNotExist:
+                return JsonResponse({
+                    'error': True,
+                    'message': 'Usuario no encontrado'
+                }, status=404)
+                
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'error': True,
+                'message': 'Datos JSON inválidos'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'error': True,
+                'message': f'Error interno del servidor: {str(e)}'
+            }, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
