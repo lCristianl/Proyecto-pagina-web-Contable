@@ -101,7 +101,7 @@ export function ProductDialog({ open, onOpenChange, product, onSave }: ProductDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{product ? "Editar Producto" : "Nuevo Producto"}</DialogTitle>
           <DialogDescription>
@@ -150,7 +150,7 @@ export function ProductDialog({ open, onOpenChange, product, onSave }: ProductDi
                   <Label htmlFor="type">Tipo *</Label>
                   <Select 
                     value={formData.type} 
-                    onValueChange={(value) => {
+                    onValueChange={(value: string) => {
                       handleChange("type", value)
                       // Si cambia a "service", cambiar a la pestaña general
                       if (value === "service") {

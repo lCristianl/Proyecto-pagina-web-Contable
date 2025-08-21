@@ -111,10 +111,10 @@ export function PurchasesTable({
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" className="bg-blue-400 hover:bg-blue-500 cursor-pointer" size="sm">
                         <Eye className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" className="bg-green-400 hover:bg-green-500 cursor-pointer"  size="sm">
                         <Download className="h-4 w-4" />
                       </Button>
                       <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 cursor-pointer" onClick={() => onEdit(purchase)}>

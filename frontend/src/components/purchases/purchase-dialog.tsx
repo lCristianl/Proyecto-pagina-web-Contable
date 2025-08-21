@@ -191,7 +191,7 @@ export function PurchaseDialog({ open, onOpenChange, purchase, onSave }: Purchas
                 <Label htmlFor="supplier">Proveedor *</Label>
                 <Select
                   value={formData.supplier_id}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, supplier_id: value }))}
+                  onValueChange={(value: string) => setFormData((prev) => ({ ...prev, supplier_id: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona un proveedor" />
@@ -228,7 +228,7 @@ export function PurchaseDialog({ open, onOpenChange, purchase, onSave }: Purchas
                 <Label htmlFor="payment_method">Método de Pago *</Label>
                 <Select
                   value={formData.payment_method}
-                  onValueChange={(value) => setFormData((prev) => ({ ...prev, payment_method: value }))}
+                  onValueChange={(value: string) => setFormData((prev) => ({ ...prev, payment_method: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecciona método" />

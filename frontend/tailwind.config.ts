@@ -20,6 +20,11 @@ const config: Config = {
       },
     },
     extend: {
+      fontFamily: {
+        'playfair': ['Playfair Display', 'serif'],
+        'source-sans': ['Source Sans 3', 'sans-serif'],
+        'sans': ['Source Sans 3', 'system-ui', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
