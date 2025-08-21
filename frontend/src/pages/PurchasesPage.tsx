@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react"
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, ShoppingCart } from "lucide-react"
@@ -9,6 +7,7 @@ import { PurchaseDialog } from "@/components/purchases/purchase-dialog"
 import { apiService, type Purchase, type CreatePurchaseData } from "@/services/api"
 import { useToast } from "@/hooks/use-toast"
 import { ClipLoader } from "react-spinners"
+import { PageLayout } from "@/components/layout/PageLayout"
 
 export function PurchasesPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([])
@@ -153,35 +152,19 @@ export function PurchasesPage() {
 
   if (initialLoading) {
     return (
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <div className="flex items-center gap-2">
-            <ShoppingCart className="h-5 w-5" />
-            <h1 className="text-lg font-semibold">Compras</h1>
-          </div>
-        </header>
+      <PageLayout title="Compras" icon={<ShoppingCart className="h-5 w-5" />}>
         <div className="flex flex-col items-center justify-center h-screen">
           <ClipLoader color="#1400ff" size={80} />
           <h2 className="mt-4 text-2xl font-semibold text-gray-700">
             Cargando...
           </h2>
         </div>
-      </SidebarInset>
+      </PageLayout>
     )
   }
 
   return (
-    <SidebarInset>
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <div className="flex items-center gap-2">
-          <ShoppingCart className="h-5 w-5" />
-          <h1 className="text-lg font-semibold">Compras</h1>
-        </div>
-      </header>
+    <PageLayout title="Compras" icon={<ShoppingCart className="h-5 w-5" />}>
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -218,6 +201,6 @@ export function PurchasesPage() {
           onSave={handleSavePurchase}
         />
       </div>
-    </SidebarInset>
+    </PageLayout>
   )
 }
