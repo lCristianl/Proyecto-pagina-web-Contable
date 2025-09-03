@@ -104,6 +104,7 @@ class InventoryMovement(models.Model):
 class Invoice(models.Model):
     STATUS_CHOICES = [
         ('draft', 'Borrador'),
+        ('pending', 'Pendiente'),
         ('sent', 'Enviada'),
         ('paid', 'Pagada'),
         ('overdue', 'Vencida'),
