@@ -42,28 +42,33 @@ export function InvoiceDetailsDialog({ open, onOpenChange, invoice }: InvoiceDet
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "paid":
-        return (
-          <Badge variant="default" className="bg-green-100 text-green-800">
-            Pagada
-          </Badge>
-        )
-      case "sent":
-        return <Badge variant="secondary">Enviada</Badge>
-      case "overdue":
-        return <Badge variant="destructive">Vencida</Badge>
       case "draft":
         return <Badge variant="outline">Borrador</Badge>
+      case "pending":
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Pendiente</Badge>
+      case "sent":
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800">Enviada</Badge>
+      case "paid":
+        return <Badge variant="outline" className="bg-green-100 text-green-800">Pagada</Badge>
+      case "overdue":
+        return <Badge variant="outline" className="bg-red-100 text-red-800">Vencida</Badge>
       default:
         return <Badge variant="outline">Desconocido</Badge>
     }
   }
 
-  // Calcular peso total de la factura
-  const totalWeight = invoice.items.reduce((sum, item) => {
-    const weight = typeof item.product.unit_weight === 'number' ? item.product.unit_weight : 0
-    return sum + (weight * item.quantity)
-  }, 0)
+  // Función auxiliar para formatear peso
+  const formatWeight = (weight: any): string => {
+    const numWeight = parseFloat(String(weight || 0))
+    return isNaN(numWeight) || numWeight === 0 ? '-' : `${numWeight.toFixed(3)} kg`
+  }
+
+  // Función auxiliar para calcular peso total de un item
+  const calculateItemWeight = (quantity: number, unitWeight: any): string => {
+    const numWeight = parseFloat(String(unitWeight || 0))
+    if (isNaN(numWeight) || numWeight === 0) return '-'
+    return `${(numWeight * quantity).toFixed(3)} kg`
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -72,11 +77,11 @@ export function InvoiceDetailsDialog({ open, onOpenChange, invoice }: InvoiceDet
           <DialogTitle className="flex justify-between items-center">
             <span>Factura #{invoice.invoice_number}</span>
             <div className="flex space-x-2">
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
+              <Button variant="outline" size="sm" className="flex items-center gap-1 bg-yellow-300 hover:bg-yellow-400 cursor-pointer">
                 <Printer className="h-4 w-4" />
                 <span className="hidden sm:inline">Imprimir</span>
               </Button>
-              <Button variant="outline" size="sm" className="flex items-center gap-1">
+              <Button variant="outline" size="sm" className="flex items-center gap-1 bg-green-400 hover:bg-green-500 cursor-pointer">
                 <Download className="h-4 w-4" />
                 <span className="hidden sm:inline">Descargar</span>
               </Button>
@@ -95,7 +100,8 @@ export function InvoiceDetailsDialog({ open, onOpenChange, invoice }: InvoiceDet
             <CardContent>
               <div className="text-sm">
                 <p className="font-semibold">{invoice.client.name}</p>
-                <p>RUC/Cédula: {invoice.client.ruc || invoice.client.cedula}</p>
+                <p>Cédula: {invoice.client.cedula}</p>
+                <p>RUC: {invoice.client.ruc || <span className="text-muted-foreground">Sin RUC</span>}</p>
                 <p>{invoice.client.address}</p>
                 <p>{invoice.client.email}</p>
                 <p>{invoice.client.phone}</p>
@@ -125,12 +131,6 @@ export function InvoiceDetailsDialog({ open, onOpenChange, invoice }: InvoiceDet
                   <p className="text-muted-foreground">Fecha de vencimiento:</p>
                   <p className="font-medium">{formatDate(invoice.due_date)}</p>
                 </div>
-                {totalWeight > 0 && (
-                  <div>
-                    <p className="text-muted-foreground">Peso total:</p>
-                    <p className="font-medium">{totalWeight.toFixed(3)} kg</p>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
@@ -163,10 +163,10 @@ export function InvoiceDetailsDialog({ open, onOpenChange, invoice }: InvoiceDet
                     </TableCell>
                     <TableCell className="text-right">{item.quantity}</TableCell>
                     <TableCell className="text-right">
-                      {typeof item.product.unit_weight === 'number' ? `${item.product.unit_weight.toFixed(3)} kg` : '-'}
+                      {formatWeight(item.product.unit_weight)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {typeof item.product.unit_weight === 'number' ? `${(item.product.unit_weight * item.quantity).toFixed(3)} kg` : '-'}
+                      {calculateItemWeight(item.quantity, item.product.unit_weight)}
                     </TableCell>
                     <TableCell className="text-right">{formatCurrency(item.unit_price)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(item.total)}</TableCell>

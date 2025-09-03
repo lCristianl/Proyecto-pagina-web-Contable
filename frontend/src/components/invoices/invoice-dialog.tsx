@@ -261,7 +261,8 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">Pendiente</SelectItem>
+                    <SelectItem value="draft">Borrador</SelectItem>
+                    <SelectItem value="pending">Pendiente</SelectItem>
                     <SelectItem value="sent">Enviada</SelectItem>
                     <SelectItem value="paid">Pagada</SelectItem>
                     <SelectItem value="overdue">Vencida</SelectItem>

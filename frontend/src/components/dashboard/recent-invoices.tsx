@@ -63,27 +63,16 @@ export function RecentInvoices() {
   }
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "paid":
-        return (
-          <Badge variant="default" className="bg-green-100 text-green-800">
-            Pagada
-          </Badge>
-        )
-      case "pending":
-      case "sent":
-        return (
-          <Badge variant="secondary" className="bg-gray-100">
-            Pendiente
-          </Badge>
-        )
-      case "overdue":
-        return (
-          <Badge variant="destructive" className="bg-red-100 text-red-800">
-            Vencida
-          </Badge>
-        )
       case "draft":
         return <Badge variant="outline">Borrador</Badge>
+      case "pending":
+        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Pendiente</Badge>
+      case "sent":
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800">Enviada</Badge>
+      case "paid":
+        return <Badge variant="outline" className="bg-green-100 text-green-800">Pagada</Badge>
+      case "overdue":
+        return <Badge variant="outline" className="bg-red-100 text-red-800">Vencida</Badge>
       default:
         return <Badge variant="outline">Desconocido</Badge>
     }
