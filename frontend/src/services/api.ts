@@ -15,28 +15,55 @@ interface PaginatedResponse<T> {
 
 class ApiService {
   private baseURL: string
+  private csrfToken: string | null = null
 
   constructor(baseURL: string) {
     this.baseURL = baseURL
+    this.initializeCSRFToken()
+  }
+
+  private async initializeCSRFToken() {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/csrf-token/`, {
+        credentials: 'include'
+      })
+      const data = await response.json()
+      this.csrfToken = data.csrf_token
+    } catch (error) {
+      console.error('Failed to get CSRF token:', error)
+    }
+  }
+
+  private async ensureCSRFToken() {
+    if (!this.csrfToken) {
+      await this.initializeCSRFToken()
+    }
+    return this.csrfToken
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`
+
+    // Asegurar que tenemos el token CSRF para peticiones que lo requieren
+    const needsCSRF = ['POST', 'PUT', 'PATCH', 'DELETE'].includes((options.method || 'GET').toUpperCase())
+    if (needsCSRF) {
+      await this.ensureCSRFToken()
+    }
 
     const config: RequestInit = {
       headers: {
         "Content-Type": "application/json",
         ...options.headers,
       },
+      credentials: 'include', // Incluir cookies en todas las peticiones
       ...options,
     }
 
-    // Agregar token de autenticación si existe
-    const token = localStorage.getItem("authToken")
-    if (token) {
+    // Agregar token CSRF para peticiones que lo requieren
+    if (needsCSRF && this.csrfToken) {
       config.headers = {
         ...config.headers,
-        Authorization: `Bearer ${token}`,
+        'X-CSRFToken': this.csrfToken,
       }
     }
 
@@ -107,14 +134,42 @@ class ApiService {
           responseData: data,
         })
         
-        if (data && (data.message || data.detail || data.error)) {
-          console.error('Backend Error Message:', data.message || data.detail || data.error);
-          if (data.errors) {
-            console.error('Field errors:', data.errors);
-          }
+        // Crear un error más detallado para manejar en el frontend
+        const error = new Error() as any
+        
+        if (data && data.non_field_errors) {
+          // Errores de validación de modelo (como unique_together)
+          error.message = data.non_field_errors[0] || 'Error de validación'
+          error.fieldErrors = data
+          error.type = 'validation'
+        } else if (data && data.ruc) {
+          // Error específico del campo RUC
+          error.message = Array.isArray(data.ruc) ? data.ruc[0] : data.ruc
+          error.fieldErrors = data
+          error.type = 'field_validation'
+        } else if (data && data.cedula) {
+          // Error específico del campo cédula
+          error.message = Array.isArray(data.cedula) ? data.cedula[0] : data.cedula
+          error.fieldErrors = data
+          error.type = 'field_validation'
+        } else if (data && (data.message || data.detail || data.error)) {
+          error.message = data.message || data.detail || data.error
+          error.fieldErrors = data
+          error.type = 'api_error'
+        } else {
+          error.message = `HTTP error! status: ${response.status}`
+          error.fieldErrors = data
+          error.type = 'http_error'
         }
         
-        throw new Error(data.message || data.detail || `HTTP error! status: ${response.status}`)
+        if (data && data.errors) {
+          console.error('Field errors:', data.errors);
+        }
+        
+        // Mostrar todos los errores detallados
+        console.error('Full error response:', data);
+        
+        throw error
       }
 
       return {
@@ -133,7 +188,9 @@ class ApiService {
     return this.request<T>(endpoint, { method: "GET" })
   }
 
-  async post<T>(endpoint: string, data: any): Promise<ApiResponse<T>> {    return this.request<T>(endpoint, {
+  async post<T>(endpoint: string, data: any): Promise<ApiResponse<T>> {
+    console.log('POST request data:', data); // Agregar logging
+    return this.request<T>(endpoint, {
       method: "POST",
       body: JSON.stringify(data),
     })
@@ -208,6 +265,18 @@ class ApiService {
 
   async getProduct(id: number) {
     return this.get<Product>(`/products/${id}/`)
+  }
+
+  async getProductsWithStock(): Promise<ProductWithStock[]> {
+    try {
+      const response = await this.request<ProductWithStock[]>('/products/with-stock/', {
+        method: 'GET'
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error fetching products with stock:', error)
+      throw error
+    }
   }
 
   async createProduct(data: Partial<Product>) {
@@ -311,6 +380,15 @@ class ApiService {
   async deleteExpense(id: number) {
     return this.delete(`/expenses/${id}/`)
   }
+
+  // Dashboard y estadísticas
+  async getDashboardStats() {
+    return this.get<DashboardStats>("/dashboard/stats/")
+  }
+
+  async getExpensesStats() {
+    return this.get<ExpensesStatsResponse>("/expenses/stats/")
+  }
 }
 
 // Tipos de datos
@@ -351,6 +429,20 @@ export interface Product {
   current_stock?: number
   minimum_stock?: number
   location?: string
+}
+
+export interface ProductWithStock {
+  id: number
+  name: string
+  code: string
+  price: number
+  type: "product" | "service"
+  description?: string
+  unit_weight?: number
+  created_at: string
+  updated_at: string
+  current_stock: number
+  available: boolean
 }
 
 export interface InventoryItem {
@@ -447,6 +539,23 @@ export interface Expense {
   description: string
   created_at: string
   updated_at: string
+}
+
+export interface DashboardStats {
+  monthlyRevenue: number
+  monthlyExpenses: number
+  netProfit: number
+  pendingInvoices: number
+}
+
+export interface ExpenseByCategory {
+  category: string
+  amount: number
+}
+
+export interface ExpensesStatsResponse {
+  expenses_by_category: ExpenseByCategory[]
+  month: string
 }
 
 // Agregar tipo específico para crear facturas
