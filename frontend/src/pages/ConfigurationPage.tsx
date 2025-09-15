@@ -188,7 +188,7 @@ export function ConfigurationPage() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="logo">Logo de la Empresa</Label>
-                  <Input id="logo" type="file" accept="image/*" className="cursor-pointer" />
+                  <Input id="logo" type="file" accept="image/*" className="cursor-pointer bg-blue-100" />
                   <p className="text-sm text-muted-foreground">
                     Sube el logo de tu empresa (formato PNG, JPG, máximo 2MB)
                   </p>
