@@ -13,6 +13,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.http import JsonResponse
 from django.conf import settings
+from django.middleware.csrf import get_token
 import json
 import random
 from .models import (
@@ -38,30 +39,101 @@ class StandardResultsSetPagination(PageNumberPagination):
     max_page_size = 100
 
 class ClientViewSet(viewsets.ModelViewSet):
-    queryset = Client.objects.all().order_by('-created_at')
+    queryset = Client.objects.all()  # Queryset base para el router
     serializer_class = ClientSerializer
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'ruc', 'cedula', 'email', 'phone']
 
+    def get_queryset(self):
+        # Filtrar solo los clientes del usuario autenticado
+        if self.request.user.is_authenticated:
+            return Client.objects.filter(user=self.request.user).order_by('-created_at')
+        return Client.objects.none()
+
+    def perform_create(self, serializer):
+        # Asignar automáticamente el usuario autenticado al crear
+        serializer.save(user=self.request.user)
+
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all().order_by('-created_at')
+    queryset = Product.objects.all()  # Queryset base para el router
     serializer_class = ProductSerializer
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'code']
 
+    def get_queryset(self):
+        # Filtrar solo los productos del usuario autenticado
+        if self.request.user.is_authenticated:
+            return Product.objects.filter(user=self.request.user).order_by('-created_at')
+        return Product.objects.none()
+
+    def perform_create(self, serializer):
+        # Asignar automáticamente el usuario autenticado al crear
+        serializer.save(user=self.request.user)
+
+@api_view(['GET'])
+def products_with_stock(request):
+    """Endpoint para obtener productos con información de stock para facturas"""
+    if not request.user.is_authenticated:
+        return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+    products = Product.objects.filter(user=request.user).order_by('name')
+    products_data = []
+    
+    for product in products:
+        product_data = {
+            'id': product.id,
+            'name': product.name,
+            'code': product.code,
+            'price': product.price,
+            'type': product.type,
+            'description': product.description,
+            'unit_weight': product.unit_weight,
+            'created_at': product.created_at.isoformat(),
+            'updated_at': product.updated_at.isoformat(),
+            'current_stock': 0,  # Default para servicios
+            'available': True
+        }
+        
+        # Solo agregar información de stock para productos (no servicios)
+        if product.type == 'product':
+            try:
+                inventory = InventoryProduct.objects.get(product=product)
+                product_data['current_stock'] = float(inventory.current_stock)
+                product_data['available'] = inventory.current_stock > 0
+            except InventoryProduct.DoesNotExist:
+                product_data['current_stock'] = 0
+                product_data['available'] = False
+        else:
+            # Los servicios siempre están disponibles
+            product_data['available'] = True
+        
+        products_data.append(product_data)
+    
+    return Response(products_data)
+
 class InvoiceViewSet(viewsets.ModelViewSet):
-    queryset = Invoice.objects.all().order_by('-created_at')
+    queryset = Invoice.objects.all()  # Queryset base para el router
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['invoice_number', 'client__name']
     
+    def get_queryset(self):
+        # Filtrar solo las facturas del usuario autenticado
+        if self.request.user.is_authenticated:
+            return Invoice.objects.filter(user=self.request.user).order_by('-created_at')
+        return Invoice.objects.none()
+
     def get_serializer_class(self):
         # Usar diferentes serializers para crear y leer
         if self.action == 'create':
             return InvoiceCreateSerializer
         return InvoiceSerializer
+    
+    def perform_create(self, serializer):
+        # Asignar automáticamente el usuario autenticado al crear
+        serializer.save(user=self.request.user)
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -84,26 +156,56 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             )
 
 class ExpenseViewSet(viewsets.ModelViewSet):
-    queryset = Expense.objects.all().order_by('-created_at')
+    queryset = Expense.objects.all()  # Queryset base para el router
     serializer_class = ExpenseSerializer
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['category', 'description']
 
+    def get_queryset(self):
+        # Filtrar solo los gastos del usuario autenticado
+        if self.request.user.is_authenticated:
+            return Expense.objects.filter(user=self.request.user).order_by('-created_at')
+        return Expense.objects.none()
+
+    def perform_create(self, serializer):
+        # Asignar automáticamente el usuario autenticado al crear
+        serializer.save(user=self.request.user)
+
 # Vistas para los nuevos módulos
 class SupplierViewSet(viewsets.ModelViewSet):
-    queryset = Supplier.objects.all().order_by('-created_at')
+    queryset = Supplier.objects.all()  # Queryset base para el router
     serializer_class = SupplierSerializer
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'ruc', 'email', 'phone']
 
+    def get_queryset(self):
+        # Filtrar solo los proveedores del usuario autenticado
+        if self.request.user.is_authenticated:
+            return Supplier.objects.filter(user=self.request.user).order_by('-created_at')
+        return Supplier.objects.none()
+
+    def perform_create(self, serializer):
+        # Agregar logging para debug
+        print(f"Creating supplier with data: {self.request.data}")
+        print(f"User: {self.request.user}")
+        
+        # Asignar automáticamente el usuario autenticado al crear
+        serializer.save(user=self.request.user)
+
 class InventoryMovementViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = InventoryMovement.objects.all().order_by('-date', '-created_at')
+    queryset = InventoryMovement.objects.all()  # Queryset base para el router
     serializer_class = InventoryMovementSerializer
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['product__name', 'reason']
+
+    def get_queryset(self):
+        # Filtrar solo los movimientos de productos del usuario autenticado
+        if self.request.user.is_authenticated:
+            return InventoryMovement.objects.filter(product__user=self.request.user).order_by('-date', '-created_at')
+        return InventoryMovement.objects.none()
 
 class InventoryAdjustmentView(views.APIView):
     def post(self, request):
@@ -147,15 +249,25 @@ class ProductLocationView(views.APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class PurchaseViewSet(viewsets.ModelViewSet):
-    queryset = Purchase.objects.all().order_by('-date', '-created_at')
+    queryset = Purchase.objects.all()  # Queryset base para el router
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['supplier__name', 'invoice_number']
+
+    def get_queryset(self):
+        # Filtrar solo las compras del usuario autenticado
+        if self.request.user.is_authenticated:
+            return Purchase.objects.filter(user=self.request.user).order_by('-date', '-created_at')
+        return Purchase.objects.none()
 
     def get_serializer_class(self):
         if self.action == 'create' or self.action == 'update' or self.action == 'partial_update':
             return CreatePurchaseSerializer
         return PurchaseSerializer
+
+    def perform_create(self, serializer):
+        # Asignar automáticamente el usuario autenticado al crear
+        serializer.save(user=self.request.user)
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -167,32 +279,46 @@ class PurchaseViewSet(viewsets.ModelViewSet):
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 class InventoryProductViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = InventoryProduct.objects.all().order_by('-updated_at')
+    queryset = InventoryProduct.objects.all()  # Queryset base para el router
     serializer_class = InventoryProductSerializer
     pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
     search_fields = ['product__name', 'product__code', 'location']
 
+    def get_queryset(self):
+        # Filtrar solo los productos de inventario del usuario autenticado
+        if self.request.user.is_authenticated:
+            return InventoryProduct.objects.filter(product__user=self.request.user).order_by('-updated_at')
+        return InventoryProduct.objects.none()
+
 @api_view(['GET'])
 def dashboard_stats(request):
+    # Verificar que el usuario esté autenticado
+    if not request.user.is_authenticated:
+        return Response({'error': 'Usuario no autenticado'}, status=401)
+    
     today = timezone.now().date()
     month_start = today.replace(day=1)
 
-    # Suma de facturas pagadas del mes actual
+    # Suma de facturas pagadas del mes actual - filtrar por usuario
     monthly_revenue = Invoice.objects.filter(
-        date__gte=month_start, status='paid'
+        user=request.user,
+        date__gte=month_start, 
+        status='paid'
     ).aggregate(total=Sum('total'))['total'] or 0
 
-    # Suma de gastos del mes actual
+    # Suma de gastos del mes actual - filtrar por usuario
     monthly_expenses = Expense.objects.filter(
+        user=request.user,
         date__gte=month_start
     ).aggregate(total=Sum('amount'))['total'] or 0
 
     # Ganancia neta
     net_profit = monthly_revenue - monthly_expenses
 
-    # Cantidad de facturas pendientes
+    # Cantidad de facturas pendientes - filtrar por usuario
     pending_invoices = Invoice.objects.filter(
+        user=request.user,
         status='sent'
     ).count()
 
@@ -204,7 +330,52 @@ def dashboard_stats(request):
     }
     return Response(data)
 
+@api_view(['GET'])
+def expenses_stats(request):
+    """Obtener estadísticas de gastos por categoría para el usuario autenticado"""
+    # Verificar que el usuario esté autenticado
+    if not request.user.is_authenticated:
+        return Response({'error': 'Usuario no autenticado'}, status=401)
+    
+    today = timezone.now().date()
+    month_start = today.replace(day=1)
+    
+    # Obtener gastos por categoría del mes actual
+    expenses_by_category = Expense.objects.filter(
+        user=request.user,
+        date__gte=month_start
+    ).values('category').annotate(
+        total_amount=Sum('amount')
+    ).order_by('-total_amount')
+    
+    # Formatear los datos para el gráfico
+    chart_data = [
+        {
+            'category': expense['category'],
+            'amount': float(expense['total_amount'])
+        }
+        for expense in expenses_by_category
+    ]
+    
+    # Si no hay datos, devolver array vacío
+    if not chart_data:
+        chart_data = []
+    
+    return Response({
+        'expenses_by_category': chart_data,
+        'month': month_start.strftime('%B %Y')
+    })
+
 # Vistas de autenticación
+@csrf_exempt
+def csrf_token_view(request):
+    """Vista para obtener el token CSRF"""
+    if request.method == 'GET':
+        return JsonResponse({
+            'csrf_token': get_token(request)
+        })
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
 @csrf_exempt
 def login_view(request):
     if request.method == 'POST':
