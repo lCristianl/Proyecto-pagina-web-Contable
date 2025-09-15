@@ -30,8 +30,9 @@ class UserProfile(models.Model):
 # Create your models here.
 
 class Client(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='clients')  # Agregar relación con usuario
     name = models.CharField(max_length=255)
-    cedula = models.CharField(max_length=20, unique=True)
+    cedula = models.CharField(max_length=20)
     ruc = models.CharField(max_length=20, unique=True, null=True, blank=True)
     address = models.CharField(max_length=255)
     email = models.EmailField()
@@ -39,9 +40,17 @@ class Client(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        # Hacer que la combinación user+cedula sea única (para permitir misma cedula en diferentes usuarios)
+        unique_together = [['user', 'cedula']]
+
+    def __str__(self):
+        return f"{self.name} ({self.user.username})"
+
 class Supplier(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='suppliers')  # Agregar relación con usuario
     name = models.CharField(max_length=255)
-    ruc = models.CharField(max_length=20, unique=True)
+    ruc = models.CharField(max_length=20)
     address = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField(blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
@@ -49,14 +58,19 @@ class Supplier(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    class Meta:
+        # Hacer que la combinación user+ruc sea única
+        unique_together = [['user', 'ruc']]
+    
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.user.username})"
 
 class Product(models.Model):
     PRODUCT_TYPE_CHOICES = [
         ('product', 'Producto'),
         ('service', 'Servicio'),
     ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products')  # Agregar relación con usuario
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     type = models.CharField(max_length=10, choices=PRODUCT_TYPE_CHOICES)
@@ -66,8 +80,12 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    class Meta:
+        # Hacer que la combinación user+code sea única
+        unique_together = [['user', 'code']]
+    
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.user.username})"
 
 class InventoryProduct(models.Model):
     product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='inventory')
@@ -109,6 +127,7 @@ class Invoice(models.Model):
         ('paid', 'Pagada'),
         ('overdue', 'Vencida'),
     ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invoices')  # Agregar relación con usuario
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     invoice_number = models.CharField(max_length=50)
     date = models.DateField()
@@ -120,6 +139,13 @@ class Invoice(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        # Hacer que la combinación user+invoice_number sea única
+        unique_together = [['user', 'invoice_number']]
+
+    def __str__(self):
+        return f"Factura {self.invoice_number} ({self.user.username})"
+
 class InvoiceItem(models.Model):
     invoice = models.ForeignKey(Invoice, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -128,6 +154,7 @@ class InvoiceItem(models.Model):
     total = models.DecimalField(max_digits=10, decimal_places=2)
 
 class Expense(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='expenses')  # Agregar relación con usuario
     category = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateField()
@@ -135,7 +162,11 @@ class Expense(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f"{self.category} - {self.amount} ({self.user.username})"
+
 class Purchase(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='purchases')  # Agregar relación con usuario
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchases')
     invoice_number = models.CharField(max_length=50, blank=True, null=True)
     date = models.DateField()
@@ -148,7 +179,7 @@ class Purchase(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Compra {self.id} a {self.supplier.name}"
+        return f"Compra {self.id} a {self.supplier.name} ({self.user.username})"
 
 class PurchaseItem(models.Model):
     purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE, related_name='items')
