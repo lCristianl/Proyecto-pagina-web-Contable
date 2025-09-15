@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Trash2 } from "lucide-react"
-import type { Invoice, Client, Product, InvoiceItem } from "@/services/api"
+import type { Invoice, Client, Product, ProductWithStock, InvoiceItem } from "@/services/api"
 import { apiService } from "@/services/api"
 
 interface InvoiceFormData {
@@ -49,12 +49,13 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
   })
   const [items, setItems] = useState<Partial<InvoiceItem>[]>([])
   const [clients, setClients] = useState<Client[]>([])
-  const [products, setProducts] = useState<Product[]>([])
+  const [productsWithStock, setProductsWithStock] = useState<ProductWithStock[]>([])
+  const [selectedProductIds, setSelectedProductIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
     if (open) {
       fetchClients()
-      fetchProducts()
+      fetchProductsWithStock()
     }
   }, [open])
 
@@ -76,6 +77,10 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
       }))
       
       setItems(normalizedItems)
+      
+      // Actualizar productos seleccionados al cargar factura existente
+      const selectedIds = new Set((invoice.items || []).map(item => item.product?.id).filter(Boolean) as number[])
+      setSelectedProductIds(selectedIds)
     } else {
       const today = new Date().toISOString().split("T")[0]
       const dueDate = new Date()
@@ -87,6 +92,7 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
         status: "draft",
       })
       setItems([{ product: undefined, quantity: 1, unit_price: 0, total: 0 }])
+      setSelectedProductIds(new Set())
     }
   }, [invoice, open])
 
@@ -99,12 +105,34 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
     }
   }
 
-  const fetchProducts = async () => {
+  const fetchProductsWithStock = async () => {
     try {
-      const response = await apiService.getProducts()
-      setProducts(response.data.results)
+      console.log('Fetching products with stock...')
+      const response = await apiService.getProductsWithStock()
+      console.log('Products with stock response:', response)
+      setProductsWithStock(response)
     } catch (error) {
-      console.error("Error fetching products:", error)
+      console.error("Error fetching products with stock:", error)
+      // Fallback: cargar productos normales si falla
+      try {
+        const fallbackResponse = await apiService.getProducts()
+        const productsAsStock = fallbackResponse.data.results.map(product => ({
+          id: product.id,
+          name: product.name,
+          code: product.code,
+          price: product.price,
+          type: product.type,
+          description: product.description,
+          unit_weight: product.unit_weight,
+          created_at: product.created_at,
+          updated_at: product.updated_at,
+          current_stock: 999, // Stock por defecto
+          available: true
+        }))
+        setProductsWithStock(productsAsStock)
+      } catch (fallbackError) {
+        console.error("Error fetching fallback products:", fallbackError)
+      }
     }
   }
 
@@ -178,24 +206,74 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
   }
 
   const removeItem = (index: number) => {
+    const itemToRemove = items[index]
+    if (itemToRemove.product?.id) {
+      const newSelectedIds = new Set(selectedProductIds)
+      newSelectedIds.delete(itemToRemove.product.id)
+      setSelectedProductIds(newSelectedIds)
+    }
     setItems(items.filter((_, i) => i !== index))
   }
 
   const updateItem = (index: number, field: string, value: any) => {
     const newItems = [...items]
-    newItems[index] = { ...newItems[index], [field]: value }
-
+    const oldItem = newItems[index]
+    
     if (field === "product") {
-      const product = products.find((p) => p.id === Number(value))
-      if (product) {
-        newItems[index].product = product // Mantener objeto producto completo
-        newItems[index].unit_price = product.price
-        newItems[index].total = (newItems[index].quantity || 1) * product.price
+      // Si había un producto seleccionado anteriormente, removerlo del set
+      if (oldItem.product?.id) {
+        const newSelectedIds = new Set(selectedProductIds)
+        newSelectedIds.delete(oldItem.product.id)
+        setSelectedProductIds(newSelectedIds)
       }
-    } else if (field === "quantity" || field === "unit_price") {
-      const quantity = Number(newItems[index].quantity) || 0
+      
+      // Buscar el nuevo producto
+      const product = productsWithStock.find((p) => p.id === Number(value))
+      if (product) {
+        // Verificar si el producto ya está seleccionado
+        if (selectedProductIds.has(product.id)) {
+          alert(`El producto "${product.name}" ya está agregado a la factura`)
+          return
+        }
+        
+        // Verificar disponibilidad de stock para productos físicos
+        if (product.type === "product" && !product.available) {
+          alert(`El producto "${product.name}" no tiene stock disponible`)
+          return
+        }
+        
+        // Actualizar el item y agregar producto al set de seleccionados
+        newItems[index] = {
+          ...newItems[index],
+          product: product,
+          unit_price: product.price,
+          total: (newItems[index].quantity || 1) * product.price
+        }
+        
+        const newSelectedIds = new Set(selectedProductIds)
+        newSelectedIds.add(product.id)
+        setSelectedProductIds(newSelectedIds)
+      }
+    } else if (field === "quantity") {
+      const quantity = Number(value) || 0
+      const product = oldItem.product
+      
+      // Validar stock disponible para productos físicos
+      if (product && product.type === "product") {
+        const productWithStock = productsWithStock.find(p => p.id === product.id)
+        if (productWithStock && quantity > productWithStock.current_stock) {
+          alert(`No hay suficiente stock. Stock disponible: ${productWithStock.current_stock}`)
+          return
+        }
+      }
+      
+      newItems[index] = { ...newItems[index], [field]: quantity }
       const unitPrice = Number(newItems[index].unit_price) || 0
       newItems[index].total = quantity * unitPrice
+    } else if (field === "unit_price") {
+      newItems[index] = { ...newItems[index], [field]: value }
+      const quantity = Number(newItems[index].quantity) || 0
+      newItems[index].total = quantity * Number(value)
     }
 
     setItems(newItems)
@@ -316,9 +394,25 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
                             <SelectValue placeholder="Selecciona..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {products.map((product) => (
-                              <SelectItem key={product.id} value={product.id.toString()}>
-                                {product.name} - ${product.price}
+                            {productsWithStock
+                              .filter(product => !selectedProductIds.has(product.id) || product.id === item.product?.id)
+                              .map((product) => (
+                              <SelectItem 
+                                key={product.id} 
+                                value={product.id.toString()}
+                                disabled={product.type === "product" && !product.available}
+                              >
+                                <div className="flex items-center justify-between w-full">
+                                  <span>{product.name} - ${product.price}</span>
+                                  {product.type === "product" && (
+                                    <span className={`ml-2 text-sm ${product.available ? 'text-green-600' : 'text-red-600'}`}>
+                                      Stock: {product.current_stock}
+                                    </span>
+                                  )}
+                                  {product.type === "service" && (
+                                    <span className="ml-2 text-sm text-blue-600">Servicio</span>
+                                  )}
+                                </div>
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -329,9 +423,18 @@ export function InvoiceDialog({ open, onOpenChange, invoice, onSave }: InvoiceDi
                         <Input
                           type="number"
                           min="1"
+                          max={item.product?.type === "product" ? 
+                            productsWithStock.find(p => p.id === item.product?.id)?.current_stock : 
+                            undefined
+                          }
                           value={item.quantity || 1}
                           onChange={(e) => updateItem(index, "quantity", Number.parseInt(e.target.value))}
                         />
+                        {item.product?.type === "product" && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Stock disponible: {productsWithStock.find(p => p.id === item.product?.id)?.current_stock || 0}
+                          </div>
+                        )}
                       </div>
                       <div className="col-span-2">
                         <Label>Precio Unit.</Label>
