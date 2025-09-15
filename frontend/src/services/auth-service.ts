@@ -55,25 +55,61 @@ export interface AuthCheckResponse {
 class AuthService {
   private static instance: AuthService
   private currentUser: User | null = null
+  private csrfToken: string | null = null
 
   constructor() {
     if (AuthService.instance) {
       return AuthService.instance
     }
     AuthService.instance = this
+    this.initializeCSRFToken()
   }
 
-  // Configurar fetch para incluir cookies
+  private async initializeCSRFToken() {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/csrf-token/`, {
+        credentials: 'include'
+      })
+      const data = await response.json()
+      this.csrfToken = data.csrf_token
+    } catch (error) {
+      console.error('Failed to get CSRF token:', error)
+    }
+  }
+
+  private async ensureCSRFToken() {
+    if (!this.csrfToken) {
+      await this.initializeCSRFToken()
+    }
+    return this.csrfToken
+  }
+
+  // Configurar fetch para incluir cookies y CSRF
   private async fetchWithCredentials(url: string, options: RequestInit = {}) {
-    const response = await fetch(url, {
+    // Asegurar que tenemos el token CSRF para peticiones que lo requieren
+    const needsCSRF = ['POST', 'PUT', 'PATCH', 'DELETE'].includes((options.method || 'GET').toUpperCase())
+    if (needsCSRF) {
+      await this.ensureCSRFToken()
+    }
+
+    const config: RequestInit = {
       ...options,
       credentials: 'include', // Incluir cookies en todas las peticiones
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
       },
-    })
+    }
 
+    // Agregar token CSRF para peticiones que lo requieren
+    if (needsCSRF && this.csrfToken) {
+      config.headers = {
+        ...config.headers,
+        'X-CSRFToken': this.csrfToken,
+      }
+    }
+
+    const response = await fetch(url, config)
     return response
   }
 
