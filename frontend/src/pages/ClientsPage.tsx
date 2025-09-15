@@ -97,11 +97,29 @@ export function ClientsPage() {
       }
       setIsDialogOpen(false)
       fetchClients()
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error saving client:', error)
+      
+      // Determinar el mensaje de error más apropiado
+      let errorMessage = "No se pudo guardar el cliente"
+      
+      if (error.type === 'validation' || error.type === 'field_validation') {
+        if (error.message.includes('unique set') || error.message.includes('cedula')) {
+          errorMessage = `Ya tienes un cliente registrado con la cédula: ${data.cedula || 'proporcionada'}`
+        } else if (error.message.includes('RUC')) {
+          errorMessage = `Ya tienes un cliente registrado con el RUC: ${data.ruc || 'proporcionado'}`
+        } else {
+          errorMessage = error.message
+        }
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
       toast({
         title: "Error",
-        description: "No se pudo guardar el cliente",
+        description: errorMessage,
         variant: "destructive",
+        className: "bg-red-700 text-white",
       })
     }
   }
