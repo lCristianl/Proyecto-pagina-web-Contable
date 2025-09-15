@@ -120,10 +120,25 @@ export function SuppliersPage() {
       }
       setIsDialogOpen(false)
       fetchSuppliers()
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error saving supplier:', error)
+      
+      // Determinar el mensaje de error más apropiado
+      let errorMessage = "No se pudo guardar el proveedor"
+      
+      if (error.type === 'validation' || error.type === 'field_validation') {
+        if (error.message.includes('unique set') || error.message.includes('RUC')) {
+          errorMessage = `Ya tienes un proveedor registrado con el RUC: ${data.ruc || 'proporcionado'}`
+        } else {
+          errorMessage = error.message
+        }
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
       toast({
         title: "Error",
-        description: "No se pudo guardar el proveedor",
+        description: errorMessage,
         variant: "destructive",
         className: "bg-red-700 text-white",
       })
