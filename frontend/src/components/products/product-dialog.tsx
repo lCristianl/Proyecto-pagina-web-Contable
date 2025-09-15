@@ -186,11 +186,11 @@ export function ProductDialog({ open, onOpenChange, product, onSave }: ProductDi
                     <Input
                       id="unit_weight"
                       type="number"
-                      step="0.001"
+                      step="0.01"
                       min="0"
                       value={formData.unit_weight}
                       onChange={(e) => handleChange("unit_weight", e.target.value)}
-                      placeholder="0.000"
+                      placeholder="0.00"
                     />
                   </div>
                 )}
