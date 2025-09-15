@@ -5,7 +5,8 @@ from .views import (
     SupplierViewSet, InventoryProductViewSet, InventoryMovementViewSet, 
     InventoryAdjustmentView, PurchaseViewSet, ProductLocationView,
     login_view, logout_view, check_auth_view, forgot_password_view,
-    verify_reset_code_view, reset_password_view
+    verify_reset_code_view, reset_password_view, csrf_token_view, expenses_stats,
+    products_with_stock
 )
 
 router = DefaultRouter()
@@ -20,9 +21,12 @@ router.register(r'purchases', PurchaseViewSet)
 
 urlpatterns = [
     path('dashboard/stats/', dashboard_stats, name='dashboard-stats'),
+    path('expenses/stats/', expenses_stats, name='expenses-stats'),
+    path('products/with-stock/', products_with_stock, name='products-with-stock'),
     path('inventory/adjustments/', InventoryAdjustmentView.as_view(), name='inventory-adjustments'),
     path('inventory/location/', ProductLocationView.as_view(), name='product-location-update'),
     # URLs de autenticación
+    path('auth/csrf-token/', csrf_token_view, name='csrf-token'),
     path('auth/login/', login_view, name='login'),
     path('auth/logout/', logout_view, name='logout'),
     path('auth/check/', check_auth_view, name='check-auth'),
