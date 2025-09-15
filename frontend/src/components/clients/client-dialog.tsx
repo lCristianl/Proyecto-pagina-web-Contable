@@ -65,7 +65,7 @@ export function ClientDialog({ open, onOpenChange, client, onSave }: ClientDialo
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{client ? "Editar Cliente" : "Nuevo Cliente"}</DialogTitle>
           <DialogDescription>

@@ -74,7 +74,7 @@ export function ExpenseDialog({ open, onOpenChange, expense, onSave }: ExpenseDi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] max-h-[95vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{expense ? "Editar Gasto" : "Nuevo Gasto"}</DialogTitle>
           <DialogDescription>
